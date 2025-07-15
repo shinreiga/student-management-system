@@ -3,24 +3,70 @@ import { supabase } from '../lib/supabase'
 
 export default function Dashboard({ user }) {
   const [students, setStudents] = useState([])
+  const [allUsers, setAllUsers] = useState([])
+  const [userProfile, setUserProfile] = useState(null)
   const [newStudent, setNewStudent] = useState({
     first_name: '',
     last_name: '',
     email: '',
     student_id: '',
-    grade_level: ''
+    grade_level: '',
+    assigned_user: user.id
   })
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('students')
 
   useEffect(() => {
+    fetchUserProfile()
     fetchStudents()
   }, [])
 
+  const fetchUserProfile = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching profile:', error)
+      // Create profile if it doesn't exist
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert([{ id: user.id, email: user.email, role: 'user' }])
+        .select()
+        .single()
+      
+      if (!createError) {
+        setUserProfile(newProfile)
+      }
+    } else {
+      setUserProfile(data)
+      if (data.role === 'admin') {
+        fetchAllUsers()
+      }
+    }
+  }
+
+  const fetchAllUsers = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('email')
+
+    if (!error) {
+      setAllUsers(data)
+    }
+  }
+
   const fetchStudents = async () => {
+    // Everyone can see all students, but we'll filter what fields are shown in the UI
     const { data, error } = await supabase
       .from('students')
-      .select('*')
+      .select(`
+        *,
+        profiles!students_user_id_fkey (email, role)
+      `)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -43,7 +89,7 @@ export default function Dashboard({ user }) {
           email: newStudent.email,
           student_id: newStudent.student_id || null,
           grade_level: newStudent.grade_level || null,
-          user_id: user.id
+          user_id: newStudent.assigned_user
         }
       ])
 
@@ -56,7 +102,8 @@ export default function Dashboard({ user }) {
         last_name: '',
         email: '',
         student_id: '',
-        grade_level: ''
+        grade_level: '',
+        assigned_user: user.id
       })
       fetchStudents()
     }
@@ -79,8 +126,44 @@ export default function Dashboard({ user }) {
     }
   }
 
+  const updateUserRole = async (userId, newRole) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId)
+
+    if (error) {
+      console.error('Error updating role:', error)
+      alert('Error updating role: ' + error.message)
+    } else {
+      fetchAllUsers()
+      alert('Role updated successfully!')
+    }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
+  }
+
+  const isAdmin = userProfile?.role === 'admin'
+  const canEdit = (studentUserId) => isAdmin || studentUserId === user.id
+
+  // Function to filter student data based on user role
+  const getStudentDisplayData = (student) => {
+    if (isAdmin) {
+      // Admins see everything
+      return student
+    } else {
+      // Regular users see limited fields
+      return {
+        id: student.id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        student_id: student.student_id,
+        user_id: student.user_id,
+        profiles: student.profiles
+      }
+    }
   }
 
   return (
@@ -89,15 +172,14 @@ export default function Dashboard({ user }) {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
-      {/* ULTRA MODERN ANIMATED HEADER */}
+      {/* Header */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.1)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
         position: 'sticky',
         top: 0,
-        zIndex: 50,
-        animation: 'slideDown 0.5s ease-out'
+        zIndex: 50
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -110,10 +192,9 @@ export default function Dashboard({ user }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px',
-                animation: 'pulse 2s infinite'
+                fontSize: '24px'
               }}>
-                🚀
+                {isAdmin ? '👑' : '🎓'}
               </div>
               <div>
                 <h1 style={{
@@ -123,22 +204,23 @@ export default function Dashboard({ user }) {
                   margin: 0,
                   textShadow: '0 4px 8px rgba(0,0,0,0.3)'
                 }}>
-                  ULTRA 221 MODERN Student Portal
+                  Student Directory System
                 </h1>
                 <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0 }}>
-                  Next-Generation Management System ✨
+                  {isAdmin ? '👑 Administrator Panel - Full Access' : '👤 User View - Limited Access'}
                 </p>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <div style={{
-                background: 'rgba(255,255,255,0.2)',
+                background: isAdmin ? 'linear-gradient(45deg, #ffd700, #ffed4a)' : 'rgba(255,255,255,0.2)',
                 padding: '10px 20px',
                 borderRadius: '25px',
-                color: 'white',
-                fontSize: '14px'
+                color: isAdmin ? 'black' : 'white',
+                fontSize: '14px',
+                fontWeight: 'bold'
               }}>
-                👤 {user.email}
+                {isAdmin ? '👑 ADMIN' : '👤 USER'} | {user.email}
               </div>
               <button
                 onClick={signOut}
@@ -150,17 +232,7 @@ export default function Dashboard({ user }) {
                   borderRadius: '25px',
                   cursor: 'pointer',
                   fontSize: '16px',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 16px rgba(255,71,87,0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)'
-                  e.target.style.boxShadow = '0 12px 24px rgba(255,71,87,0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)'
-                  e.target.style.boxShadow = '0 8px 16px rgba(255,71,87,0.3)'
+                  fontWeight: 'bold'
                 }}
               >
                 🚪 Sign Out
@@ -171,7 +243,7 @@ export default function Dashboard({ user }) {
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px' }}>
-        {/* FUTURISTIC TAB NAVIGATION */}
+        {/* Tab Navigation */}
         <div style={{ marginBottom: '30px' }}>
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
@@ -180,12 +252,15 @@ export default function Dashboard({ user }) {
             borderRadius: '20px',
             display: 'flex',
             gap: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+            border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             {[
-              { id: 'students', label: 'Students', icon: '👥', color: '#4ecdc4' },
+              { id: 'students', label: 'All Students', icon: '👥', color: '#4ecdc4' },
               { id: 'table', label: 'Table View', icon: '📊', color: '#45b7d1' },
+              ...(isAdmin ? [
+                { id: 'add', label: 'Add Student', icon: '➕', color: '#ff6b6b' },
+                { id: 'users', label: 'User Management', icon: '👑', color: '#ffd700' }
+              ] : []),
               { id: 'raw', label: 'Raw Data', icon: '🔧', color: '#96ceb4' }
             ].map((tab) => (
               <button
@@ -205,9 +280,7 @@ export default function Dashboard({ user }) {
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
-                  transform: activeTab === tab.id ? 'scale(1.05)' : 'scale(1)',
-                  boxShadow: activeTab === tab.id ? `0 8px 16px ${tab.color}44` : 'none'
+                  gap: '10px'
                 }}
               >
                 <span style={{ fontSize: '20px' }}>{tab.icon}</span>
@@ -217,15 +290,14 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
-        {/* SPECTACULAR ADD STUDENT FORM */}
-        <div style={{ marginBottom: '30px' }}>
+        {/* Add Student Form (Admin Only) */}
+        {activeTab === 'add' && isAdmin && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(20px)',
             borderRadius: '25px',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            overflow: 'hidden',
-            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1)'
+            overflow: 'hidden'
           }}>
             <div style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -236,74 +308,99 @@ export default function Dashboard({ user }) {
                 fontSize: '28px',
                 fontWeight: 'bold',
                 color: 'white',
-                margin: 0,
-                textShadow: '0 4px 8px rgba(0,0,0,0.3)'
+                margin: 0
               }}>
-                ✨ Add New Student ✨
+                ✨ Add New Student (Admin Only)
               </h2>
-              <p style={{ color: 'rgba(255,255,255,0.9)', margin: '10px 0 0 0' }}>
-                Register a new student in the system
-              </p>
             </div>
             <form onSubmit={createStudent} style={{ padding: '30px' }}>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                 gap: '20px',
-                marginBottom: '30px'
+                marginBottom: '20px'
               }}>
-                {[
-                  { label: 'First Name', field: 'first_name', placeholder: 'Enter first name', icon: '👤' },
-                  { label: 'Last Name', field: 'last_name', placeholder: 'Enter last name', icon: '👤' },
-                  { label: 'Email', field: 'email', placeholder: 'student@example.com', icon: '📧', type: 'email' },
-                  { label: 'Student ID', field: 'student_id', placeholder: 'Optional ID', icon: '🆔' }
-                ].map((field) => (
-                  <div key={field.field}>
-                    <label style={{
-                      display: 'block',
+                <div>
+                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                    👤 First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newStudent.first_name}
+                    onChange={(e) => setNewStudent({ ...newStudent, first_name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '15px',
+                      borderRadius: '15px',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.1)',
                       color: 'white',
-                      fontWeight: 'bold',
-                      marginBottom: '8px',
-                      fontSize: '14px'
-                    }}>
-                      {field.icon} {field.label}
-                    </label>
-                    <input
-                      type={field.type || 'text'}
-                      value={newStudent[field.field]}
-                      onChange={(e) => setNewStudent({ ...newStudent, [field.field]: e.target.value })}
-                      placeholder={field.placeholder}
-                      required={field.field !== 'student_id'}
-                      style={{
-                        width: '100%',
-                        padding: '15px',
-                        borderRadius: '15px',
-                        border: '2px solid rgba(255, 255, 255, 0.2)',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        color: 'white',
-                        fontSize: '16px',
-                        backdropFilter: 'blur(10px)',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#4ecdc4'
-                        e.target.style.boxShadow = '0 0 20px rgba(78, 205, 196, 0.3)'
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-                        e.target.style.boxShadow = 'none'
-                      }}
-                    />
-                  </div>
-                ))}
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{
-                    display: 'block',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    marginBottom: '8px',
-                    fontSize: '14px'
-                  }}>
+                      fontSize: '16px'
+                    }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                    👤 Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newStudent.last_name}
+                    onChange={(e) => setNewStudent({ ...newStudent, last_name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '15px',
+                      borderRadius: '15px',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      fontSize: '16px'
+                    }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                    📧 Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newStudent.email}
+                    onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '15px',
+                      borderRadius: '15px',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      fontSize: '16px'
+                    }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                    🆔 Student ID
+                  </label>
+                  <input
+                    type="text"
+                    value={newStudent.student_id}
+                    onChange={(e) => setNewStudent({ ...newStudent, student_id: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '15px',
+                      borderRadius: '15px',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
                     🎓 Grade Level
                   </label>
                   <select
@@ -316,14 +413,35 @@ export default function Dashboard({ user }) {
                       border: '2px solid rgba(255, 255, 255, 0.2)',
                       background: 'rgba(255, 255, 255, 0.1)',
                       color: 'white',
-                      fontSize: '16px',
-                      backdropFilter: 'blur(10px)'
+                      fontSize: '16px'
                     }}
                   >
-                    <option value="" style={{ background: '#333', color: 'white' }}>Select Grade Level</option>
+                    <option value="">Select Grade</option>
                     {['Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', 
                       '6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'].map(grade => (
-                      <option key={grade} value={grade} style={{ background: '#333', color: 'white' }}>{grade}</option>
+                      <option key={grade} value={grade}>{grade}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                    👤 Assign to User
+                  </label>
+                  <select
+                    value={newStudent.assigned_user}
+                    onChange={(e) => setNewStudent({ ...newStudent, assigned_user: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '15px',
+                      borderRadius: '15px',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      fontSize: '16px'
+                    }}
+                  >
+                    {allUsers.map(user => (
+                      <option key={user.id} value={user.id}>{user.email} ({user.role})</option>
                     ))}
                   </select>
                 </div>
@@ -332,57 +450,27 @@ export default function Dashboard({ user }) {
                 type="submit"
                 disabled={loading}
                 style={{
-                  background: loading ? '#666' : 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
+                  background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
                   color: 'white',
                   border: 'none',
                   padding: '18px 40px',
                   borderRadius: '25px',
                   fontSize: '18px',
                   fontWeight: 'bold',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
                   margin: '0 auto'
                 }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.target.style.transform = 'translateY(-3px)'
-                    e.target.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.3)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) {
-                    e.target.style.transform = 'translateY(0)'
-                    e.target.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)'
-                  }
-                }}
               >
-                {loading ? (
-                  <>
-                    <div style={{
-                      width: '20px',
-                      height: '20px',
-                      border: '2px solid white',
-                      borderTop: '2px solid transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }}></div>
-                    Adding Student...
-                  </>
-                ) : (
-                  <>
-                    ⚡ Add Student
-                  </>
-                )}
+                {loading ? 'Adding...' : '⚡ Add Student'}
               </button>
             </form>
           </div>
-        </div>
+        )}
 
-        {/* STUDENTS DISPLAY */}
+        {/* All Students View */}
         {activeTab === 'students' && (
           <div>
             <div style={{
@@ -397,132 +485,101 @@ export default function Dashboard({ user }) {
                 color: 'white',
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}>
-                👥 Students ({students.length})
+                👥 All Students ({students.length})
+                {!isAdmin && (
+                  <div style={{ fontSize: '14px', opacity: 0.8, marginTop: '5px' }}>
+                    ℹ️ Limited view: Name and Student ID only
+                  </div>
+                )}
               </h2>
             </div>
             
-            {students.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '60px 20px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '25px',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}>
-                <div style={{ fontSize: '80px', marginBottom: '20px' }}>📚</div>
-                <h3 style={{ color: 'white', fontSize: '24px', marginBottom: '10px' }}>
-                  No students registered yet
-                </h3>
-                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '16px' }}>
-                  Add your first student using the form above!
-                </p>
-              </div>
-            ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                gap: '20px'
-              }}>
-                {students.map((student, index) => (
-                  <div
-                    key={student.id}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      backdropFilter: 'blur(20px)',
-                      borderRadius: '20px',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      overflow: 'hidden',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer',
-                      animation: `slideUp 0.5s ease-out ${index * 0.1}s both`
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.transform = 'translateY(-5px)'
-                      e.target.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.2)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.transform = 'translateY(0)'
-                      e.target.style.boxShadow = 'none'
-                    }}
-                  >
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+              gap: '20px'
+            }}>
+              {students.map((student, index) => {
+                const displayData = getStudentDisplayData(student)
+                const canEditThis = canEdit(student.user_id)
+                
+                return (
+                  <div key={student.id} style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(20px)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    overflow: 'hidden'
+                  }}>
                     <div style={{
-                      background: `linear-gradient(45deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'][index % 5]}, ${['#ff7675', '#55efc4', '#74b9ff', '#a8e6cf', '#fdcb6e'][index % 5]})`,
+                      background: `linear-gradient(45deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'][index % 4]}, ${['#ff7675', '#55efc4', '#74b9ff', '#a8e6cf'][index % 4]})`,
                       padding: '20px',
                       color: 'white'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                         <div>
                           <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
-                            {student.first_name} {student.last_name}
+                            {displayData.first_name} {displayData.last_name}
                           </h3>
-                          <p style={{ margin: '5px 0 0 0', opacity: 0.9 }}>{student.email}</p>
+                          {isAdmin && (
+                            <>
+                              <p style={{ margin: '5px 0', opacity: 0.9 }}>{student.email}</p>
+                              {student.profiles && (
+                                <p style={{ margin: '5px 0', opacity: 0.8, fontSize: '14px' }}>
+                                  Managed by: {student.profiles.email}
+                                </p>
+                              )}
+                            </>
+                          )}
+                          {!isAdmin && (
+                            <p style={{ margin: '5px 0', opacity: 0.9, fontSize: '14px' }}>
+                              👁️ Limited view - contact admin for full details
+                            </p>
+                          )}
                         </div>
-                        <button
-                          onClick={() => deleteStudent(student.id)}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.2)',
-                            border: 'none',
-                            borderRadius: '10px',
-                            padding: '8px',
-                            cursor: 'pointer',
-                            fontSize: '18px',
-                            transition: 'all 0.3s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.background = 'rgba(255, 0, 0, 0.3)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.background = 'rgba(255, 255, 255, 0.2)'
-                          }}
-                        >
-                          🗑️
-                        </button>
+                        {canEditThis && (
+                          <button
+                            onClick={() => deleteStudent(student.id)}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.2)',
+                              border: 'none',
+                              borderRadius: '10px',
+                              padding: '8px',
+                              cursor: 'pointer',
+                              fontSize: '18px'
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div style={{ padding: '20px' }}>
-                      {student.student_id && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          marginBottom: '10px',
-                          color: 'white'
-                        }}>
-                          <span style={{ fontSize: '18px' }}>🆔</span>
-                          <span>ID: {student.student_id}</span>
-                        </div>
+                    <div style={{ padding: '20px', color: 'white' }}>
+                      {displayData.student_id && (
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '10px 0' }}>
+                          <span>🆔</span> ID: {displayData.student_id}
+                        </p>
                       )}
-                      {student.grade_level && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          marginBottom: '10px',
-                          color: 'white'
-                        }}>
-                          <span style={{ fontSize: '18px' }}>🎓</span>
-                          <span>Grade: {student.grade_level}</span>
-                        </div>
+                      {isAdmin && (
+                        <>
+                          {student.grade_level && <p>🎓 Grade: {student.grade_level}</p>}
+                          <p>📅 Enrolled: {new Date(student.enrollment_date).toLocaleDateString()}</p>
+                        </>
                       )}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        color: 'white'
-                      }}>
-                        <span style={{ fontSize: '18px' }}>📅</span>
-                        <span>Enrolled: {new Date(student.enrollment_date).toLocaleDateString()}</span>
-                      </div>
+                      {!isAdmin && !displayData.student_id && (
+                        <p style={{ opacity: 0.7, fontSize: '14px' }}>
+                          No additional details available
+                        </p>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                )
+              })}
+            </div>
           </div>
         )}
 
-        {/* TABLE VIEW */}
+        {/* Table View */}
         {activeTab === 'table' && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
@@ -536,165 +593,165 @@ export default function Dashboard({ user }) {
               padding: '25px',
               textAlign: 'center'
             }}>
-              <h2 style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: 'white',
-                margin: 0
-              }}>
-                📊 Students Database Table
+              <h2 style={{ color: 'white', margin: 0, fontSize: '24px' }}>
+                📊 Students Table ({students.length})
+                {!isAdmin && (
+                  <div style={{ fontSize: '14px', opacity: 0.8, marginTop: '5px' }}>
+                    Limited view for regular users
+                  </div>
+                )}
               </h2>
-              <p style={{ color: 'rgba(255,255,255,0.9)', margin: '10px 0 0 0' }}>
-                {students.length} students registered
-              </p>
             </div>
-            
-            {students.length === 0 ? (
-              <div style={{
-                padding: '60px',
-                textAlign: 'center',
-                color: 'white'
-              }}>
-                <div style={{ fontSize: '60px', marginBottom: '20px' }}>📋</div>
-                <p style={{ fontSize: '18px' }}>No records in database yet</p>
-              </div>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
-                      {['ID', 'Name', 'Email', 'Student ID', 'Grade', 'Enrolled', 'Actions'].map((header) => (
-                        <th key={header} style={{
-                          padding: '15px',
-                          textAlign: 'left',
-                          color: 'white',
-                          fontWeight: 'bold',
-                          fontSize: '14px'
-                        }}>
-                          {header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((student, index) => (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
+                    <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>First Name</th>
+                    <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Last Name</th>
+                    <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Student ID</th>
+                    {isAdmin && (
+                      <>
+                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Email</th>
+                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Grade</th>
+                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Enrolled</th>
+                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Managed By</th>
+                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Actions</th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student, index) => {
+                    const displayData = getStudentDisplayData(student)
+                    const canEditThis = canEdit(student.user_id)
+                    
+                    return (
                       <tr key={student.id} style={{
-                        background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-                        transition: 'background 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = 'rgba(78, 205, 196, 0.2)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)'
+                        background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)'
                       }}>
-                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontFamily: 'monospace' }}>
-                          {student.id.slice(0, 8)}...
-                        </td>
-                        <td style={{ padding: '15px', color: 'white', fontWeight: 'bold' }}>
-                          {student.first_name} {student.last_name}
-                        </td>
-                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
-                          {student.email}
-                        </td>
-                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
-                          {student.student_id || '—'}
-                        </td>
-                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
-                          {student.grade_level || '—'}
-                        </td>
-                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
-                          {new Date(student.enrollment_date).toLocaleDateString()}
-                        </td>
-                        <td style={{ padding: '15px' }}>
-                          <button
-                            onClick={() => deleteStudent(student.id)}
-                            style={{
-                              background: 'linear-gradient(45deg, #ff4757, #ff3742)',
-                              color: 'white',
-                              border: 'none',
-                              padding: '8px 15px',
-                              borderRadius: '20px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.transform = 'scale(1.1)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.transform = 'scale(1)'
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </td>
+                        <td style={{ padding: '15px', color: 'white' }}>{displayData.first_name}</td>
+                        <td style={{ padding: '15px', color: 'white' }}>{displayData.last_name}</td>
+                        <td style={{ padding: '15px', color: 'white' }}>{displayData.student_id || '—'}</td>
+                        {isAdmin && (
+                          <>
+                            <td style={{ padding: '15px', color: 'white' }}>{student.email}</td>
+                            <td style={{ padding: '15px', color: 'white' }}>{student.grade_level || '—'}</td>
+                            <td style={{ padding: '15px', color: 'white' }}>
+                              {new Date(student.enrollment_date).toLocaleDateString()}
+                            </td>
+                            <td style={{ padding: '15px', color: 'white' }}>
+                              {student.profiles?.email || 'Unknown'}
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              {canEditThis && (
+                                <button
+                                  onClick={() => deleteStudent(student.id)}
+                                  style={{
+                                    background: 'linear-gradient(45deg, #ff4757, #ff3742)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '8px 15px',
+                                    borderRadius: '20px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </td>
+                          </>
+                        )}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        {/* RAW DATA VIEW */}
+        {/* User Management (Admin Only) */}
+        {activeTab === 'users' && isAdmin && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '25px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            padding: '30px'
+          }}>
+            <h2 style={{ color: 'white', fontSize: '24px', marginBottom: '20px' }}>
+              👑 User Management (Admin Only)
+            </h2>
+            <div style={{ display: 'grid', gap: '15px' }}>
+              {allUsers.map(user => (
+                <div key={user.id} style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  padding: '20px',
+                  borderRadius: '15px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ color: 'white' }}>
+                    <h3 style={{ margin: 0, fontSize: '18px' }}>{user.email}</h3>
+                    <p style={{ margin: '5px 0', opacity: 0.8 }}>
+                      Role: {user.role === 'admin' ? '👑 Admin' : '👤 User'}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      onClick={() => updateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                      style={{
+                        background: user.role === 'admin' ? 'linear-gradient(45deg, #ff4757, #ff3742)' : 'linear-gradient(45deg, #ffd700, #ffed4a)',
+                        color: user.role === 'admin' ? 'white' : 'black',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Raw Data */}
         {activeTab === 'raw' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '25px',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                background: 'linear-gradient(45deg, #2ecc71, #27ae60)',
-                padding: '20px',
-                textAlign: 'center'
-              }}>
-                <h3 style={{ color: 'white', margin: 0, fontSize: '20px' }}>👤 User Information</h3>
-              </div>
-              <div style={{ padding: '20px' }}>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '25px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            padding: '30px'
+          }}>
+            <h2 style={{ color: 'white', fontSize: '24px', marginBottom: '20px' }}>
+              🔧 Raw Data {!isAdmin && '(Limited View)'}
+            </h2>
+            <div style={{ display: 'grid', gap: '20px' }}>
+              <div>
+                <h3 style={{ color: 'white', marginBottom: '10px' }}>Your Profile:</h3>
                 <pre style={{
                   background: 'rgba(0, 0, 0, 0.3)',
                   color: '#00ff00',
                   padding: '20px',
                   borderRadius: '15px',
                   fontSize: '14px',
-                  overflow: 'auto',
-                  fontFamily: 'monospace'
+                  overflow: 'auto'
                 }}>
-                  {JSON.stringify({
-                    user_id: user.id,
-                    email: user.email,
-                    created_at: user.created_at,
-                    last_sign_in: user.last_sign_in_at,
-                    email_confirmed: user.email_confirmed_at ? 'Yes' : 'No',
-                    role: user.role
-                  }, null, 2)}
+                  {JSON.stringify(userProfile, null, 2)}
                 </pre>
               </div>
-            </div>
-
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '25px',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                background: 'linear-gradient(45deg, #9b59b6, #8e44ad)',
-                padding: '20px',
-                textAlign: 'center'
-              }}>
-                <h3 style={{ color: 'white', margin: 0, fontSize: '20px' }}>
-                  📊 Students Data ({students.length} records)
+              <div>
+                <h3 style={{ color: 'white', marginBottom: '10px' }}>
+                  Students Data {!isAdmin && '(Filtered)'}:
                 </h3>
-              </div>
-              <div style={{ padding: '20px' }}>
                 <pre style={{
                   background: 'rgba(0, 0, 0, 0.3)',
                   color: '#00ff00',
@@ -702,42 +759,36 @@ export default function Dashboard({ user }) {
                   borderRadius: '15px',
                   fontSize: '14px',
                   overflow: 'auto',
-                  fontFamily: 'monospace',
                   maxHeight: '400px'
                 }}>
-                  {JSON.stringify(students, null, 2)}
+                  {JSON.stringify(
+                    isAdmin 
+                      ? students 
+                      : students.map(getStudentDisplayData), 
+                    null, 
+                    2
+                  )}
                 </pre>
               </div>
+              {isAdmin && (
+                <div>
+                  <h3 style={{ color: 'white', marginBottom: '10px' }}>All Users (Admin Only):</h3>
+                  <pre style={{
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    color: '#00ff00',
+                    padding: '20px',
+                    borderRadius: '15px',
+                    fontSize: '14px',
+                    overflow: 'auto'
+                  }}>
+                    {JSON.stringify(allUsers, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-        
-        @keyframes slideDown {
-          from { transform: translateY(-100%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        
-        @keyframes slideUp {
-          from { transform: translateY(50px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        
-        input::placeholder, select option {
-          color: rgba(255, 255, 255, 0.6) !important;
-        }
-      `}</style>
     </div>
   )
 }
