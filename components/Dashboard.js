@@ -123,7 +123,7 @@ export default function Dashboard({ user }) {
                   margin: 0,
                   textShadow: '0 4px 8px rgba(0,0,0,0.3)'
                 }}>
-                  ULTRA MODERN Student Portal
+                  ULTRA 2 MODERN Student Portal
                 </h1>
                 <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0 }}>
                   Next-Generation Management System ✨
