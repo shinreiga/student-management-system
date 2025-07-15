@@ -95,7 +95,7 @@ export default function Dashboard({ user }) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  Student Management
+                  Modern Student Management
                 </h1>
                 <p className="text-sm text-gray-500">Manage your students with ease</p>
               </div>
