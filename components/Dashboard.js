@@ -146,24 +146,17 @@ export default function Dashboard({ user }) {
   }
 
   // Fixed sign out function
-  const signOut = async () => {
-    try {
-      console.log('Signing out...')
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Sign out error:', error)
-        alert('Error signing out: ' + error.message)
-      } else {
-        console.log('Signed out successfully')
-        // Force page reload to ensure complete logout
-        window.location.href = '/'
-      }
-    } catch (err) {
-      console.error('Sign out exception:', err)
-      // Force page reload as fallback
-      window.location.href = '/'
-    }
-  }
+const signOut = () => {
+  console.log('Attempting sign out...')
+  supabase.auth.signOut().then(() => {
+    console.log('Sign out completed, reloading page...')
+    window.location.reload()
+  }).catch((error) => {
+    console.error('Sign out error:', error)
+    // Force reload anyway
+    window.location.reload()
+  })
+}
 
   const isAdmin = userProfile?.role === 'admin'
   const canEdit = (studentUserId) => isAdmin || studentUserId === user.id
