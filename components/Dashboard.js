@@ -84,219 +84,435 @@ export default function Dashboard({ user }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Modern Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">SM</span>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
+      {/* ULTRA MODERN ANIMATED HEADER */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        animation: 'slideDown 0.5s ease-out'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
+                borderRadius: '15px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                animation: 'pulse 2s infinite'
+              }}>
+                🚀
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  Student Management
+                <h1 style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  margin: 0,
+                  textShadow: '0 4px 8px rgba(0,0,0,0.3)'
+                }}>
+                  ULTRA MODERN Student Portal
                 </h1>
-                <p className="text-sm text-gray-500">Manage your students with ease</p>
+                <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0 }}>
+                  Next-Generation Management System ✨
+                </p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">{user.email}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.2)',
+                padding: '10px 20px',
+                borderRadius: '25px',
+                color: 'white',
+                fontSize: '14px'
+              }}>
+                👤 {user.email}
               </div>
               <button
                 onClick={signOut}
-                className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                style={{
+                  background: 'linear-gradient(45deg, #ff4757, #ff3742)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '25px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 16px rgba(255,71,87,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)'
+                  e.target.style.boxShadow = '0 12px 24px rgba(255,71,87,0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)'
+                  e.target.style.boxShadow = '0 8px 16px rgba(255,71,87,0.3)'
+                }}
               >
-                Sign Out
+                🚪 Sign Out
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Modern Tab Navigation */}
-        <div className="mb-8">
-          <div className="flex space-x-1 bg-white/70 backdrop-blur-sm p-1 rounded-2xl shadow-lg border border-gray-200/50">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px' }}>
+        {/* FUTURISTIC TAB NAVIGATION */}
+        <div style={{ marginBottom: '30px' }}>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            padding: '8px',
+            borderRadius: '20px',
+            display: 'flex',
+            gap: '8px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+          }}>
             {[
-              { id: 'students', label: 'Students', icon: '👥' },
-              { id: 'table', label: 'Table View', icon: '📊' },
-              { id: 'raw', label: 'Raw Data', icon: '🔧' }
+              { id: 'students', label: 'Students', icon: '👥', color: '#4ecdc4' },
+              { id: 'table', label: 'Table View', icon: '📊', color: '#45b7d1' },
+              { id: 'raw', label: 'Raw Data', icon: '🔧', color: '#96ceb4' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                }`}
+                style={{
+                  background: activeTab === tab.id 
+                    ? `linear-gradient(45deg, ${tab.color}, ${tab.color}dd)` 
+                    : 'transparent',
+                  color: activeTab === tab.id ? 'white' : 'rgba(255,255,255,0.8)',
+                  border: 'none',
+                  padding: '15px 30px',
+                  borderRadius: '15px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transform: activeTab === tab.id ? 'scale(1.05)' : 'scale(1)',
+                  boxShadow: activeTab === tab.id ? `0 8px 16px ${tab.color}44` : 'none'
+                }}
               >
-                <span>{tab.icon}</span>
-                <span className="font-medium">{tab.label}</span>
+                <span style={{ fontSize: '20px' }}>{tab.icon}</span>
+                {tab.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Modern Add Student Form */}
-        <div className="mb-8">
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-8 py-6">
-              <h2 className="text-2xl font-bold text-white flex items-center">
-                <span className="mr-3">✨</span>
-                Add New Student
+        {/* SPECTACULAR ADD STUDENT FORM */}
+        <div style={{ marginBottom: '30px' }}>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '25px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            overflow: 'hidden',
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              padding: '30px',
+              textAlign: 'center'
+            }}>
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: 'white',
+                margin: 0,
+                textShadow: '0 4px 8px rgba(0,0,0,0.3)'
+              }}>
+                ✨ Add New Student ✨
               </h2>
-              <p className="text-blue-100 mt-1">Enter student information below</p>
+              <p style={{ color: 'rgba(255,255,255,0.9)', margin: '10px 0 0 0' }}>
+                Register a new student in the system
+              </p>
             </div>
-            <form onSubmit={createStudent} className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">First Name</label>
-                  <input
-                    type="text"
-                    value={newStudent.first_name}
-                    onChange={(e) => setNewStudent({ ...newStudent, first_name: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Enter first name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Last Name</label>
-                  <input
-                    type="text"
-                    value={newStudent.last_name}
-                    onChange={(e) => setNewStudent({ ...newStudent, last_name: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Enter last name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Email Address</label>
-                  <input
-                    type="email"
-                    value={newStudent.email}
-                    onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="student@example.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Student ID</label>
-                  <input
-                    type="text"
-                    value={newStudent.student_id}
-                    onChange={(e) => setNewStudent({ ...newStudent, student_id: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Optional student ID"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Grade Level</label>
+            <form onSubmit={createStudent} style={{ padding: '30px' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '20px',
+                marginBottom: '30px'
+              }}>
+                {[
+                  { label: 'First Name', field: 'first_name', placeholder: 'Enter first name', icon: '👤' },
+                  { label: 'Last Name', field: 'last_name', placeholder: 'Enter last name', icon: '👤' },
+                  { label: 'Email', field: 'email', placeholder: 'student@example.com', icon: '📧', type: 'email' },
+                  { label: 'Student ID', field: 'student_id', placeholder: 'Optional ID', icon: '🆔' }
+                ].map((field) => (
+                  <div key={field.field}>
+                    <label style={{
+                      display: 'block',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      marginBottom: '8px',
+                      fontSize: '14px'
+                    }}>
+                      {field.icon} {field.label}
+                    </label>
+                    <input
+                      type={field.type || 'text'}
+                      value={newStudent[field.field]}
+                      onChange={(e) => setNewStudent({ ...newStudent, [field.field]: e.target.value })}
+                      placeholder={field.placeholder}
+                      required={field.field !== 'student_id'}
+                      style={{
+                        width: '100%',
+                        padding: '15px',
+                        borderRadius: '15px',
+                        border: '2px solid rgba(255, 255, 255, 0.2)',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: 'white',
+                        fontSize: '16px',
+                        backdropFilter: 'blur(10px)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#4ecdc4'
+                        e.target.style.boxShadow = '0 0 20px rgba(78, 205, 196, 0.3)'
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                        e.target.style.boxShadow = 'none'
+                      }}
+                    />
+                  </div>
+                ))}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{
+                    display: 'block',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    marginBottom: '8px',
+                    fontSize: '14px'
+                  }}>
+                    🎓 Grade Level
+                  </label>
                   <select
                     value={newStudent.grade_level}
                     onChange={(e) => setNewStudent({ ...newStudent, grade_level: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    style={{
+                      width: '100%',
+                      padding: '15px',
+                      borderRadius: '15px',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      fontSize: '16px',
+                      backdropFilter: 'blur(10px)'
+                    }}
                   >
-                    <option value="">Select Grade Level</option>
-                    <option value="Kindergarten">Kindergarten</option>
-                    <option value="1st Grade">1st Grade</option>
-                    <option value="2nd Grade">2nd Grade</option>
-                    <option value="3rd Grade">3rd Grade</option>
-                    <option value="4th Grade">4th Grade</option>
-                    <option value="5th Grade">5th Grade</option>
-                    <option value="6th Grade">6th Grade</option>
-                    <option value="7th Grade">7th Grade</option>
-                    <option value="8th Grade">8th Grade</option>
-                    <option value="9th Grade">9th Grade</option>
-                    <option value="10th Grade">10th Grade</option>
-                    <option value="11th Grade">11th Grade</option>
-                    <option value="12th Grade">12th Grade</option>
+                    <option value="" style={{ background: '#333', color: 'white' }}>Select Grade Level</option>
+                    {['Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', 
+                      '6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'].map(grade => (
+                      <option key={grade} value={grade} style={{ background: '#333', color: 'white' }}>{grade}</option>
+                    ))}
                   </select>
                 </div>
               </div>
-              <div className="mt-8">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-4 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none font-medium"
-                >
-                  {loading ? (
-                    <span className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Adding Student...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <span className="mr-2">+</span>
-                      Add Student
-                    </span>
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  background: loading ? '#666' : 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '18px 40px',
+                  borderRadius: '25px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  margin: '0 auto'
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading) {
+                    e.target.style.transform = 'translateY(-3px)'
+                    e.target.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.3)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading) {
+                    e.target.style.transform = 'translateY(0)'
+                    e.target.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)'
+                  }
+                }}
+              >
+                {loading ? (
+                  <>
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      border: '2px solid white',
+                      borderTop: '2px solid transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }}></div>
+                    Adding Student...
+                  </>
+                ) : (
+                  <>
+                    ⚡ Add Student
+                  </>
+                )}
+              </button>
             </form>
           </div>
         </div>
 
-        {/* Students Card View */}
+        {/* STUDENTS DISPLAY */}
         {activeTab === 'students' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <span className="mr-3">👥</span>
-                Students ({students.length})
+          <div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: 'white',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                👥 Students ({students.length})
               </h2>
             </div>
+            
             {students.length === 0 ? (
-              <div className="text-center py-16 bg-white/50 backdrop-blur-sm rounded-3xl border border-gray-200/50">
-                <div className="text-6xl mb-4">📚</div>
-                <p className="text-xl text-gray-600 mb-2">No students registered yet</p>
-                <p className="text-gray-500">Add your first student using the form above!</p>
+              <div style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '25px',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                <div style={{ fontSize: '80px', marginBottom: '20px' }}>📚</div>
+                <h3 style={{ color: 'white', fontSize: '24px', marginBottom: '10px' }}>
+                  No students registered yet
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '16px' }}>
+                  Add your first student using the form above!
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {students.map((student) => (
-                  <div key={student.id} className="group bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl border border-gray-200/50 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                    <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-white text-lg">
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                gap: '20px'
+              }}>
+                {students.map((student, index) => (
+                  <div
+                    key={student.id}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(20px)',
+                      borderRadius: '20px',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                      animation: `slideUp 0.5s ease-out ${index * 0.1}s both`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'translateY(-5px)'
+                      e.target.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.2)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  >
+                    <div style={{
+                      background: `linear-gradient(45deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'][index % 5]}, ${['#ff7675', '#55efc4', '#74b9ff', '#a8e6cf', '#fdcb6e'][index % 5]})`,
+                      padding: '20px',
+                      color: 'white'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
                             {student.first_name} {student.last_name}
                           </h3>
-                          <p className="text-blue-100 text-sm">{student.email}</p>
+                          <p style={{ margin: '5px 0 0 0', opacity: 0.9 }}>{student.email}</p>
                         </div>
                         <button
                           onClick={() => deleteStudent(student.id)}
-                          className="text-red-200 hover:text-white transition-colors duration-200 p-1 rounded-lg hover:bg-red-500/30"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '8px',
+                            cursor: 'pointer',
+                            fontSize: '18px',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.background = 'rgba(255, 0, 0, 0.3)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = 'rgba(255, 255, 255, 0.2)'
+                          }}
                         >
-                          <span className="text-lg">🗑️</span>
+                          🗑️
                         </button>
                       </div>
                     </div>
-                    <div className="p-6 space-y-3">
+                    <div style={{ padding: '20px' }}>
                       {student.student_id && (
-                        <div className="flex items-center space-x-2">
-                          <span className="text-blue-500">🆔</span>
-                          <span className="text-sm text-gray-600">ID:</span>
-                          <span className="text-sm font-medium">{student.student_id}</span>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          marginBottom: '10px',
+                          color: 'white'
+                        }}>
+                          <span style={{ fontSize: '18px' }}>🆔</span>
+                          <span>ID: {student.student_id}</span>
                         </div>
                       )}
                       {student.grade_level && (
-                        <div className="flex items-center space-x-2">
-                          <span className="text-green-500">🎓</span>
-                          <span className="text-sm text-gray-600">Grade:</span>
-                          <span className="text-sm font-medium">{student.grade_level}</span>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          marginBottom: '10px',
+                          color: 'white'
+                        }}>
+                          <span style={{ fontSize: '18px' }}>🎓</span>
+                          <span>Grade: {student.grade_level}</span>
                         </div>
                       )}
-                      <div className="flex items-center space-x-2">
-                        <span className="text-purple-500">📅</span>
-                        <span className="text-sm text-gray-600">Enrolled:</span>
-                        <span className="text-sm font-medium">{new Date(student.enrollment_date).toLocaleDateString()}</span>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        color: 'white'
+                      }}>
+                        <span style={{ fontSize: '18px' }}>📅</span>
+                        <span>Enrolled: {new Date(student.enrollment_date).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
@@ -306,60 +522,110 @@ export default function Dashboard({ user }) {
           </div>
         )}
 
-        {/* Modern Table View */}
+        {/* TABLE VIEW */}
         {activeTab === 'table' && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-8 py-6">
-              <h2 className="text-2xl font-bold text-white flex items-center">
-                <span className="mr-3">📊</span>
-                Students Database Table
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '25px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              padding: '25px',
+              textAlign: 'center'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: 'white',
+                margin: 0
+              }}>
+                📊 Students Database Table
               </h2>
-              <p className="text-blue-100 mt-1">{students.length} students registered</p>
+              <p style={{ color: 'rgba(255,255,255,0.9)', margin: '10px 0 0 0' }}>
+                {students.length} students registered
+              </p>
             </div>
             
             {students.length === 0 ? (
-              <div className="p-12 text-center text-gray-500">
-                <div className="text-6xl mb-4">📋</div>
-                <p className="text-lg">No records in database yet</p>
-                <p className="text-sm mt-2">Add your first student above to see table data</p>
+              <div style={{
+                padding: '60px',
+                textAlign: 'center',
+                color: 'white'
+              }}>
+                <div style={{ fontSize: '60px', marginBottom: '20px' }}>📋</div>
+                <p style={{ fontSize: '18px' }}>No records in database yet</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead className="bg-gray-50/80">
-                    <tr>
-                      {['ID', 'Name', 'Email', 'Student ID', 'Grade Level', 'Enrollment Date', 'Actions'].map((header) => (
-                        <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
+                      {['ID', 'Name', 'Email', 'Student ID', 'Grade', 'Enrolled', 'Actions'].map((header) => (
+                        <th key={header} style={{
+                          padding: '15px',
+                          textAlign: 'left',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          fontSize: '14px'
+                        }}>
                           {header}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200/50">
+                  <tbody>
                     {students.map((student, index) => (
-                      <tr key={student.id} className={`${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'} hover:bg-blue-50/50 transition-colors duration-200`}>
-                        <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-500">
+                      <tr key={student.id} style={{
+                        background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
+                        transition: 'background 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(78, 205, 196, 0.2)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)'
+                      }}>
+                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontFamily: 'monospace' }}>
                           {student.id.slice(0, 8)}...
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">{student.first_name} {student.last_name}</div>
+                        <td style={{ padding: '15px', color: 'white', fontWeight: 'bold' }}>
+                          {student.first_name} {student.last_name}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
                           {student.email}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
                           {student.student_id || '—'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
                           {student.grade_level || '—'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td style={{ padding: '15px', color: 'rgba(255,255,255,0.9)' }}>
                           {new Date(student.enrollment_date).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td style={{ padding: '15px' }}>
                           <button
                             onClick={() => deleteStudent(student.id)}
-                            className="text-red-500 hover:text-red-700 font-medium hover:bg-red-50 px-3 py-1 rounded-lg transition-all duration-200"
+                            style={{
+                              background: 'linear-gradient(45deg, #ff4757, #ff3742)',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 15px',
+                              borderRadius: '20px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.transform = 'scale(1.1)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.transform = 'scale(1)'
+                            }}
                           >
                             Delete
                           </button>
@@ -370,87 +636,108 @@ export default function Dashboard({ user }) {
                 </table>
               </div>
             )}
-            
-            <div className="px-8 py-4 bg-gray-50/80 border-t border-gray-200/50">
-              <div className="flex justify-between items-center text-sm text-gray-600">
-                <span>Database: PostgreSQL | Table: students</span>
-                <span>Showing all students for user: {user.email}</span>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Modern Raw Data View */}
+        {/* RAW DATA VIEW */}
         {activeTab === 'raw' && (
-          <div className="space-y-6">
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden">
-              <div className="bg-gradient-to-r from-green-500 to-teal-500 px-8 py-6">
-                <h2 className="text-2xl font-bold text-white flex items-center">
-                  <span className="mr-3">👤</span>
-                  User Information
-                </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '25px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                background: 'linear-gradient(45deg, #2ecc71, #27ae60)',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <h3 style={{ color: 'white', margin: 0, fontSize: '20px' }}>👤 User Information</h3>
               </div>
-              <div className="p-8">
-                <div className="bg-gray-900 rounded-2xl p-6">
-                  <pre className="text-green-400 text-sm overflow-x-auto">
-                    {JSON.stringify({
-                      user_id: user.id,
-                      email: user.email,
-                      created_at: user.created_at,
-                      last_sign_in: user.last_sign_in_at,
-                      email_confirmed: user.email_confirmed_at ? 'Yes' : 'No',
-                      role: user.role
-                    }, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden">
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-6">
-                <h2 className="text-2xl font-bold text-white flex items-center">
-                  <span className="mr-3">📊</span>
-                  Students Data ({students.length} records)
-                </h2>
-              </div>
-              <div className="p-8">
-                <div className="bg-gray-900 rounded-2xl p-6">
-                  <pre className="text-green-400 text-sm overflow-x-auto whitespace-pre-wrap">
-                    {JSON.stringify(students, null, 2)}
-                  </pre>
-                </div>
+              <div style={{ padding: '20px' }}>
+                <pre style={{
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  color: '#00ff00',
+                  padding: '20px',
+                  borderRadius: '15px',
+                  fontSize: '14px',
+                  overflow: 'auto',
+                  fontFamily: 'monospace'
+                }}>
+                  {JSON.stringify({
+                    user_id: user.id,
+                    email: user.email,
+                    created_at: user.created_at,
+                    last_sign_in: user.last_sign_in_at,
+                    email_confirmed: user.email_confirmed_at ? 'Yes' : 'No',
+                    role: user.role
+                  }, null, 2)}
+                </pre>
               </div>
             </div>
 
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-500 to-blue-500 px-8 py-6">
-                <h2 className="text-2xl font-bold text-white flex items-center">
-                  <span className="mr-3">🔧</span>
-                  Database Schema Info
-                </h2>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '25px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                background: 'linear-gradient(45deg, #9b59b6, #8e44ad)',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <h3 style={{ color: 'white', margin: 0, fontSize: '20px' }}>
+                  📊 Students Data ({students.length} records)
+                </h3>
               </div>
-              <div className="p-8">
-                <div className="bg-gray-100 rounded-2xl p-6">
-                  <p className="font-mono text-sm leading-relaxed">
-                    <strong>Table:</strong> students<br/>
-                    <strong>Columns:</strong><br/>
-                    • id (UUID, Primary Key)<br/>
-                    • first_name (TEXT, Required)<br/>
-                    • last_name (TEXT, Required)<br/>
-                    • email (TEXT, Required, Unique)<br/>
-                    • student_id (TEXT, Optional, Unique)<br/>
-                    • grade_level (TEXT, Optional)<br/>
-                    • enrollment_date (DATE, Default: today)<br/>
-                    • user_id (UUID, Foreign Key → auth.users)<br/>
-                    • created_at (TIMESTAMP)<br/>
-                    • updated_at (TIMESTAMP)
-                  </p>
-                </div>
+              <div style={{ padding: '20px' }}>
+                <pre style={{
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  color: '#00ff00',
+                  padding: '20px',
+                  borderRadius: '15px',
+                  fontSize: '14px',
+                  overflow: 'auto',
+                  fontFamily: 'monospace',
+                  maxHeight: '400px'
+                }}>
+                  {JSON.stringify(students, null, 2)}
+                </pre>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        
+        @keyframes slideDown {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+          from { transform: translateY(50px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        input::placeholder, select option {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+      `}</style>
     </div>
   )
 }
