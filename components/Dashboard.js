@@ -59,31 +59,31 @@ export default function Dashboard({ user }) {
   }
 
   const fetchStudents = async () => {
-    // Fetch all students - policies should allow this
+  console.log('🔍 Fetching students...')
+  
+  try {
+    // Simple query without joins first
     const { data, error } = await supabase
       .from('students')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        email,
-        student_id,
-        grade_level,
-        enrollment_date,
-        user_id,
-        created_at,
-        profiles!students_user_id_fkey (email, role)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
+    console.log('📊 Query result:', { data, error })
+    console.log('📝 Number of students found:', data?.length || 0)
+    
     if (error) {
-      console.error('Error fetching students:', error)
-      console.log('Error details:', error)
+      console.error('❌ Error:', error)
+      alert('Error: ' + error.message)
+      setStudents([])
     } else {
-      console.log('Fetched students:', data)
+      console.log('✅ Success! Students:', data)
       setStudents(data || [])
     }
+  } catch (err) {
+    console.error('💥 Exception:', err)
+    setStudents([])
   }
+}
 
   const createStudent = async (e) => {
     e.preventDefault()
