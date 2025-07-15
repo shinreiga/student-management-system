@@ -145,8 +145,24 @@ export default function Dashboard({ user }) {
     }
   }
 
+  // Fixed sign out function
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      console.log('Signing out...')
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Sign out error:', error)
+        alert('Error signing out: ' + error.message)
+      } else {
+        console.log('Signed out successfully')
+        // Force page reload to ensure complete logout
+        window.location.href = '/'
+      }
+    } catch (err) {
+      console.error('Sign out exception:', err)
+      // Force page reload as fallback
+      window.location.href = '/'
+    }
   }
 
   const isAdmin = userProfile?.role === 'admin'
@@ -242,6 +258,7 @@ export default function Dashboard({ user }) {
               }}>
                 {isAdmin ? '👑' : '👤'} {isAdmin ? 'INSTRUCTOR' : 'MEMBER'}
               </div>
+              {/* Fixed Sign Out Button */}
               <button
                 onClick={signOut}
                 style={{
@@ -252,14 +269,8 @@ export default function Dashboard({ user }) {
                   borderRadius: '6px',
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  ':hover': {
-                    background: '#1f2937'
-                  }
+                  cursor: 'pointer'
                 }}
-                onMouseEnter={(e) => e.target.style.background = '#1f2937'}
-                onMouseLeave={(e) => e.target.style.background = '#374151'}
               >
                 Sign Out
               </button>
@@ -382,16 +393,6 @@ export default function Dashboard({ user }) {
                   whiteSpace: 'nowrap',
                   minWidth: 'fit-content'
                 }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = '#f3f4f6'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = 'transparent'
-                  }
-                }}
               >
                 <span style={{ fontSize: '16px' }}>{tab.icon}</span>
                 <span className="tab-label">{tab.label}</span>
@@ -471,16 +472,6 @@ export default function Dashboard({ user }) {
                         fontSize: '14px',
                         boxSizing: 'border-box',
                         transition: 'all 0.2s ease'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#dc2626'
-                        e.target.style.background = '#ffffff'
-                        e.target.style.boxShadow = '0 0 0 3px rgba(220, 38, 38, 0.1)'
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#e5e7eb'
-                        e.target.style.background = '#f9fafb'
-                        e.target.style.boxShadow = 'none'
                       }}
                     />
                   </div>
@@ -638,14 +629,6 @@ export default function Dashboard({ user }) {
                     overflow: 'hidden',
                     transition: 'all 0.2s ease',
                     cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.05)'
                   }}>
                     <div style={{
                       background: index % 2 === 0 
@@ -824,371 +807,3 @@ export default function Dashboard({ user }) {
                       </>
                     )}
                   </tr>
-                </thead>
-                <tbody>
-                  {students.map((student, index) => {
-                    const displayData = getStudentDisplayData(student)
-                    const canEditThis = canEdit(student.user_id)
-                    
-                    return (
-                      <tr key={student.id} style={{
-                        background: index % 2 === 0 ? 'white' : '#f8f9fa',
-                        borderBottom: '1px solid #e5e7eb'
-                      }}>
-                        <td style={{ padding: '16px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
-                          {displayData.first_name}
-                        </td>
-                        <td style={{ padding: '16px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
-                          {displayData.last_name}
-                        </td>
-                        <td style={{ padding: '16px', color: '#374151', fontSize: '14px' }}>
-                          {displayData.student_id ? (
-                            <span style={{
-                              background: '#dc2626',
-                              color: 'white',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              fontWeight: '600'
-                            }}>
-                              {displayData.student_id}
-                            </span>
-                          ) : (
-                            <span style={{ color: '#9ca3af' }}>—</span>
-                          )}
-                        </td>
-                        {isAdmin && (
-                          <>
-                            <td style={{ padding: '16px', color: '#374151', fontSize: '14px' }}>
-                              {student.email}
-                            </td>
-                            <td style={{ padding: '16px', color: '#374151', fontSize: '14px' }}>
-                              {student.grade_level ? (
-                                <span style={{
-                                  background: '#059669',
-                                  color: 'white',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  fontWeight: '600'
-                                }}>
-                                  {student.grade_level}
-                                </span>
-                              ) : (
-                                <span style={{ color: '#9ca3af' }}>—</span>
-                              )}
-                            </td>
-                            <td style={{ padding: '16px', color: '#374151', fontSize: '14px' }}>
-                              {new Date(student.enrollment_date).toLocaleDateString()}
-                            </td>
-                            <td style={{ padding: '16px' }}>
-                              {canEditThis && (
-                                <button
-                                  onClick={() => deleteStudent(student.id)}
-                                  style={{
-                                    background: '#dc2626',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '6px 12px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '12px',
-                                    fontWeight: '600'
-                                  }}
-                                >
-                                  Remove
-                                </button>
-                              )}
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* User Management (Admin Only) */}
-        {activeTab === 'users' && isAdmin && (
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-            border: '1px solid #e5e7eb',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
-              color: 'white',
-              padding: '25px',
-              textAlign: 'center'
-            }}>
-              <h3 style={{
-                fontSize: '22px',
-                fontWeight: '700',
-                margin: '0 0 10px 0'
-              }}>
-                ⚙️ User Management
-              </h3>
-              <p style={{
-                margin: 0,
-                opacity: 0.9,
-                fontSize: '14px'
-              }}>
-                Manage instructor and member access levels
-              </p>
-            </div>
-            <div style={{ padding: '30px' }}>
-              <div style={{ display: 'grid', gap: '20px' }}>
-                {allUsers.map(user => (
-                  <div key={user.id} style={{
-                    background: '#f8f9fa',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '15px'
-                  }}>
-                    <div style={{ flex: 1, minWidth: '200px' }}>
-                      <h4 style={{
-                        margin: '0 0 8px 0',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        color: '#374151'
-                      }}>
-                        {user.email}
-                      </h4>
-                      <div style={{
-                        background: user.role === 'admin' ? '#dc2626' : '#6b7280',
-                        color: 'white',
-                        padding: '4px 12px',
-                        borderRadius: '15px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        display: 'inline-block'
-                      }}>
-                        {user.role === 'admin' ? '👑 Instructor' : '👤 Member'}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => updateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
-                      style={{
-                        background: user.role === 'admin' 
-                          ? '#dc2626' 
-                          : '#059669',
-                        color: 'white',
-                        border: 'none',
-                        padding: '10px 20px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {user.role === 'admin' ? 'Remove Instructor' : 'Make Instructor'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Raw Data Export */}
-        {activeTab === 'raw' && (
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-            border: '1px solid #e5e7eb',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #0891b2, #0e7490)',
-              color: 'white',
-              padding: '25px',
-              textAlign: 'center'
-            }}>
-              <h3 style={{
-                fontSize: '22px',
-                fontWeight: '700',
-                margin: '0 0 10px 0'
-              }}>
-                📊 Data Export {!isAdmin && '(Limited)'}
-              </h3>
-              <p style={{
-                margin: 0,
-                opacity: 0.9,
-                fontSize: '14px'
-              }}>
-                Export member data for reports and analysis
-              </p>
-            </div>
-            <div style={{ padding: '30px' }}>
-              <div style={{ display: 'grid', gap: '25px' }}>
-                <div>
-                  <h4 style={{
-                    color: '#374151',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    marginBottom: '15px'
-                  }}>
-                    Your Profile Information:
-                  </h4>
-                  <div style={{
-                    background: '#1f2937',
-                    color: '#10b981',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontFamily: 'monospace',
-                    overflow: 'auto',
-                    border: '1px solid #374151'
-                  }}>
-                    <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                      {JSON.stringify(userProfile, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 style={{
-                    color: '#374151',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    marginBottom: '15px'
-                  }}>
-                    Members Data {!isAdmin && '(Filtered)'}:
-                  </h4>
-                  <div style={{
-                    background: '#1f2937',
-                    color: '#10b981',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontFamily: 'monospace',
-                    overflow: 'auto',
-                    maxHeight: '400px',
-                    border: '1px solid #374151'
-                  }}>
-                    <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                      {JSON.stringify(
-                        isAdmin 
-                          ? students 
-                          : students.map(getStudentDisplayData), 
-                        null, 
-                        2
-                      )}
-                    </pre>
-                  </div>
-                </div>
-
-                {isAdmin && allUsers.length > 0 && (
-                  <div>
-                    <h4 style={{
-                      color: '#374151',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      marginBottom: '15px'
-                    }}>
-                      System Users (Instructor Only):
-                    </h4>
-                    <div style={{
-                      background: '#1f2937',
-                      color: '#10b981',
-                      padding: '20px',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontFamily: 'monospace',
-                      overflow: 'auto',
-                      border: '1px solid #374151'
-                    }}>
-                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                        {JSON.stringify(allUsers, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <footer style={{
-        background: '#1f2937',
-        color: 'white',
-        padding: '40px 20px',
-        textAlign: 'center',
-        marginTop: '60px'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              margin: '0 0 10px 0'
-            }}>
-              National Taekwondo Club
-            </h4>
-            <p style={{
-              margin: 0,
-              opacity: 0.8,
-              fontSize: '14px'
-            }}>
-              Excellence in Martial Arts Training
-            </p>
-          </div>
-          <div style={{
-            borderTop: '1px solid #374151',
-            paddingTop: '20px',
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '30px',
-            flexWrap: 'wrap',
-            fontSize: '14px',
-            opacity: 0.7
-          }}>
-            <span>📧 Contact: info@nationaltaekwondoclub.co.uk</span>
-            <span>📞 Phone: 01234 567890</span>
-            <span>🏠 Location: Local Sports Center</span>
-          </div>
-        </div>
-      </footer>
-
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .tab-label {
-            display: none;
-          }
-        }
-        
-        /* Smooth scrolling for mobile tabs */
-        div::-webkit-scrollbar {
-          height: 4px;
-        }
-        
-        div::-webkit-scrollbar-track {
-          background: #f1f1f1;
-        }
-        
-        div::-webkit-scrollbar-thumb {
-          background: #dc2626;
-          border-radius: 2px;
-        }
-        
-        div::-webkit-scrollbar-thumb:hover {
-          background: #b91c1c;
-        }
-      `}</style>
-    </div>
-  )
-}
