@@ -29,7 +29,6 @@ export default function Dashboard({ user }) {
       .single()
 
     if (error) {
-      console.error('Error fetching profile:', error)
       // Create profile if it doesn't exist
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
@@ -60,19 +59,29 @@ export default function Dashboard({ user }) {
   }
 
   const fetchStudents = async () => {
-    // Everyone can see all students, but we'll filter what fields are shown in the UI
+    // Fetch all students - policies should allow this
     const { data, error } = await supabase
       .from('students')
       .select(`
-        *,
+        id,
+        first_name,
+        last_name,
+        email,
+        student_id,
+        grade_level,
+        enrollment_date,
+        user_id,
+        created_at,
         profiles!students_user_id_fkey (email, role)
       `)
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching students:', error)
+      console.log('Error details:', error)
     } else {
-      setStudents(data)
+      console.log('Fetched students:', data)
+      setStudents(data || [])
     }
   }
 
@@ -166,61 +175,105 @@ export default function Dashboard({ user }) {
     }
   }
 
+  const containerStyle = {
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    fontFamily: 'system-ui, -apple-system, sans-serif'
+  }
+
+  const headerStyle = {
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(20px)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 50
+  }
+
+  const tabContainerStyle = {
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(20px)',
+    padding: '4px',
+    borderRadius: '20px',
+    display: 'flex',
+    gap: '4px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    overflowX: 'auto',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none'
+  }
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      {/* Header */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+    <div style={containerStyle}>
+      {/* Mobile-Friendly Header */}
+      <div style={headerStyle}>
+        <div style={{ 
+          maxWidth: '1200px', 
+          margin: '0 auto', 
+          padding: '15px 20px'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px',
+              minWidth: '200px'
+            }}>
               <div style={{
-                width: '50px',
-                height: '50px',
+                width: '40px',
+                height: '40px',
                 background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
-                borderRadius: '15px',
+                borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px'
+                fontSize: '20px',
+                flexShrink: 0
               }}>
                 {isAdmin ? '👑' : '🎓'}
               </div>
               <div>
                 <h1 style={{
-                  fontSize: '32px',
+                  fontSize: 'clamp(18px, 4vw, 28px)',
                   fontWeight: 'bold',
                   color: 'white',
                   margin: 0,
-                  textShadow: '0 4px 8px rgba(0,0,0,0.3)'
+                  textShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                  lineHeight: '1.2'
                 }}>
-                  Student Directory System
+                  Student Directory
                 </h1>
-                <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0 }}>
-                  {isAdmin ? '👑 Administrator Panel - Full Access' : '👤 User View - Limited Access'}
+                <p style={{ 
+                  color: 'rgba(255,255,255,0.8)', 
+                  margin: 0,
+                  fontSize: 'clamp(12px, 2.5vw, 14px)'
+                }}>
+                  {isAdmin ? '👑 Admin' : '👤 User'} | {students.length} students
                 </p>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px',
+              flexWrap: 'wrap'
+            }}>
               <div style={{
                 background: isAdmin ? 'linear-gradient(45deg, #ffd700, #ffed4a)' : 'rgba(255,255,255,0.2)',
-                padding: '10px 20px',
-                borderRadius: '25px',
+                padding: '8px 15px',
+                borderRadius: '20px',
                 color: isAdmin ? 'black' : 'white',
-                fontSize: '14px',
-                fontWeight: 'bold'
+                fontSize: 'clamp(11px, 2vw, 13px)',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap'
               }}>
-                {isAdmin ? '👑 ADMIN' : '👤 USER'} | {user.email}
+                {user.email.split('@')[0]}
               </div>
               <button
                 onClick={signOut}
@@ -228,40 +281,37 @@ export default function Dashboard({ user }) {
                   background: 'linear-gradient(45deg, #ff4757, #ff3742)',
                   color: 'white',
                   border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '25px',
+                  padding: '10px 20px',
+                  borderRadius: '20px',
                   cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
+                  fontSize: 'clamp(12px, 2.5vw, 14px)',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap'
                 }}
               >
-                🚪 Sign Out
+                Sign Out
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px' }}>
-        {/* Tab Navigation */}
-        <div style={{ marginBottom: '30px' }}>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(20px)',
-            padding: '8px',
-            borderRadius: '20px',
-            display: 'flex',
-            gap: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}>
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: '20px'
+      }}>
+        {/* Mobile-Friendly Tab Navigation */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={tabContainerStyle}>
             {[
-              { id: 'students', label: 'All Students', icon: '👥', color: '#4ecdc4' },
-              { id: 'table', label: 'Table View', icon: '📊', color: '#45b7d1' },
+              { id: 'students', label: 'Students', icon: '👥', color: '#4ecdc4' },
+              { id: 'table', label: 'Table', icon: '📊', color: '#45b7d1' },
               ...(isAdmin ? [
-                { id: 'add', label: 'Add Student', icon: '➕', color: '#ff6b6b' },
-                { id: 'users', label: 'User Management', icon: '👑', color: '#ffd700' }
+                { id: 'add', label: 'Add', icon: '➕', color: '#ff6b6b' },
+                { id: 'users', label: 'Users', icon: '👑', color: '#ffd700' }
               ] : []),
-              { id: 'raw', label: 'Raw Data', icon: '🔧', color: '#96ceb4' }
+              { id: 'raw', label: 'Data', icon: '🔧', color: '#96ceb4' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -272,56 +322,88 @@ export default function Dashboard({ user }) {
                     : 'transparent',
                   color: activeTab === tab.id ? 'white' : 'rgba(255,255,255,0.8)',
                   border: 'none',
-                  padding: '15px 30px',
-                  borderRadius: '15px',
+                  padding: '12px 16px',
+                  borderRadius: '16px',
                   cursor: 'pointer',
-                  fontSize: '16px',
+                  fontSize: 'clamp(12px, 2.5vw, 14px)',
                   fontWeight: 'bold',
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px'
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  minWidth: 'fit-content'
                 }}
               >
-                <span style={{ fontSize: '20px' }}>{tab.icon}</span>
-                {tab.label}
+                <span style={{ fontSize: '16px' }}>{tab.icon}</span>
+                <span className="tab-label">{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
+
+        {/* Debug Info */}
+        {students.length === 0 && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            padding: '20px',
+            borderRadius: '15px',
+            marginBottom: '20px',
+            textAlign: 'center',
+            color: 'white'
+          }}>
+            <h3>🔍 No Students Found</h3>
+            <p>This could mean:</p>
+            <ul style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto' }}>
+              <li>No students have been added yet</li>
+              <li>Database connection issue</li>
+              <li>Permission problem</li>
+            </ul>
+            <p style={{ marginTop: '15px', fontSize: '14px', opacity: 0.8 }}>
+              User Profile: {userProfile ? `${userProfile.email} (${userProfile.role})` : 'Loading...'}
+            </p>
+          </div>
+        )}
 
         {/* Add Student Form (Admin Only) */}
         {activeTab === 'add' && isAdmin && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '25px',
+            borderRadius: '20px',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            marginBottom: '20px'
           }}>
             <div style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              padding: '30px',
+              padding: '20px',
               textAlign: 'center'
             }}>
               <h2 style={{
-                fontSize: '28px',
+                fontSize: 'clamp(20px, 4vw, 24px)',
                 fontWeight: 'bold',
                 color: 'white',
                 margin: 0
               }}>
-                ✨ Add New Student (Admin Only)
+                ✨ Add New Student
               </h2>
             </div>
-            <form onSubmit={createStudent} style={{ padding: '30px' }}>
+            <form onSubmit={createStudent} style={{ padding: '20px' }}>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '20px',
+                gap: '15px',
                 marginBottom: '20px'
               }}>
                 <div>
-                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    color: 'white', 
+                    fontWeight: 'bold', 
+                    marginBottom: '8px',
+                    fontSize: '14px'
+                  }}>
                     👤 First Name
                   </label>
                   <input
@@ -330,18 +412,25 @@ export default function Dashboard({ user }) {
                     onChange={(e) => setNewStudent({ ...newStudent, first_name: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '15px',
-                      borderRadius: '15px',
+                      padding: '12px',
+                      borderRadius: '12px',
                       border: '2px solid rgba(255, 255, 255, 0.2)',
                       background: 'rgba(255, 255, 255, 0.1)',
                       color: 'white',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      boxSizing: 'border-box'
                     }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    color: 'white', 
+                    fontWeight: 'bold', 
+                    marginBottom: '8px',
+                    fontSize: '14px'
+                  }}>
                     👤 Last Name
                   </label>
                   <input
@@ -350,18 +439,25 @@ export default function Dashboard({ user }) {
                     onChange={(e) => setNewStudent({ ...newStudent, last_name: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '15px',
-                      borderRadius: '15px',
+                      padding: '12px',
+                      borderRadius: '12px',
                       border: '2px solid rgba(255, 255, 255, 0.2)',
                       background: 'rgba(255, 255, 255, 0.1)',
                       color: 'white',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      boxSizing: 'border-box'
                     }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    color: 'white', 
+                    fontWeight: 'bold', 
+                    marginBottom: '8px',
+                    fontSize: '14px'
+                  }}>
                     📧 Email
                   </label>
                   <input
@@ -370,18 +466,25 @@ export default function Dashboard({ user }) {
                     onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '15px',
-                      borderRadius: '15px',
+                      padding: '12px',
+                      borderRadius: '12px',
                       border: '2px solid rgba(255, 255, 255, 0.2)',
                       background: 'rgba(255, 255, 255, 0.1)',
                       color: 'white',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      boxSizing: 'border-box'
                     }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    color: 'white', 
+                    fontWeight: 'bold', 
+                    marginBottom: '8px',
+                    fontSize: '14px'
+                  }}>
                     🆔 Student ID
                   </label>
                   <input
@@ -390,17 +493,24 @@ export default function Dashboard({ user }) {
                     onChange={(e) => setNewStudent({ ...newStudent, student_id: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '15px',
-                      borderRadius: '15px',
+                      padding: '12px',
+                      borderRadius: '12px',
                       border: '2px solid rgba(255, 255, 255, 0.2)',
                       background: 'rgba(255, 255, 255, 0.1)',
                       color: 'white',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    color: 'white', 
+                    fontWeight: 'bold', 
+                    marginBottom: '8px',
+                    fontSize: '14px'
+                  }}>
                     🎓 Grade Level
                   </label>
                   <select
@@ -408,12 +518,13 @@ export default function Dashboard({ user }) {
                     onChange={(e) => setNewStudent({ ...newStudent, grade_level: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '15px',
-                      borderRadius: '15px',
+                      padding: '12px',
+                      borderRadius: '12px',
                       border: '2px solid rgba(255, 255, 255, 0.2)',
                       background: 'rgba(255, 255, 255, 0.1)',
                       color: 'white',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      boxSizing: 'border-box'
                     }}
                   >
                     <option value="">Select Grade</option>
@@ -423,28 +534,37 @@ export default function Dashboard({ user }) {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: 'block', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>
-                    👤 Assign to User
-                  </label>
-                  <select
-                    value={newStudent.assigned_user}
-                    onChange={(e) => setNewStudent({ ...newStudent, assigned_user: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '15px',
-                      borderRadius: '15px',
-                      border: '2px solid rgba(255, 255, 255, 0.2)',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      color: 'white',
-                      fontSize: '16px'
-                    }}
-                  >
-                    {allUsers.map(user => (
-                      <option key={user.id} value={user.id}>{user.email} ({user.role})</option>
-                    ))}
-                  </select>
-                </div>
+                {allUsers.length > 0 && (
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      color: 'white', 
+                      fontWeight: 'bold', 
+                      marginBottom: '8px',
+                      fontSize: '14px'
+                    }}>
+                      👤 Assign to User
+                    </label>
+                    <select
+                      value={newStudent.assigned_user}
+                      onChange={(e) => setNewStudent({ ...newStudent, assigned_user: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        border: '2px solid rgba(255, 255, 255, 0.2)',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: 'white',
+                        fontSize: '16px',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      {allUsers.map(user => (
+                        <option key={user.id} value={user.id}>{user.email} ({user.role})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
               <button
                 type="submit"
@@ -453,15 +573,18 @@ export default function Dashboard({ user }) {
                   background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
                   color: 'white',
                   border: 'none',
-                  padding: '18px 40px',
-                  borderRadius: '25px',
-                  fontSize: '18px',
+                  padding: '15px 30px',
+                  borderRadius: '20px',
+                  fontSize: '16px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  margin: '0 auto'
+                  margin: '0 auto',
+                  width: '100%',
+                  maxWidth: '200px',
+                  justifyContent: 'center'
                 }}
               >
                 {loading ? 'Adding...' : '⚡ Add Student'}
@@ -477,27 +600,37 @@ export default function Dashboard({ user }) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              flexWrap: 'wrap',
+              gap: '10px'
             }}>
               <h2 style={{
-                fontSize: '24px',
+                fontSize: 'clamp(18px, 4vw, 24px)',
                 fontWeight: 'bold',
                 color: 'white',
-                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                margin: 0
               }}>
                 👥 All Students ({students.length})
-                {!isAdmin && (
-                  <div style={{ fontSize: '14px', opacity: 0.8, marginTop: '5px' }}>
-                    ℹ️ Limited view: Name and Student ID only
-                  </div>
-                )}
               </h2>
+              {!isAdmin && (
+                <div style={{ 
+                  fontSize: 'clamp(11px, 2vw, 13px)', 
+                  opacity: 0.8,
+                  color: 'white',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  padding: '6px 12px',
+                  borderRadius: '15px'
+                }}>
+                  ℹ️ Limited view
+                </div>
+              )}
             </div>
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-              gap: '20px'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '15px'
             }}>
               {students.map((student, index) => {
                 const displayData = getStudentDisplayData(student)
@@ -507,33 +640,54 @@ export default function Dashboard({ user }) {
                   <div key={student.id} style={{
                     background: 'rgba(255, 255, 255, 0.1)',
                     backdropFilter: 'blur(20px)',
-                    borderRadius: '20px',
+                    borderRadius: '16px',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    transition: 'transform 0.2s ease'
                   }}>
                     <div style={{
                       background: `linear-gradient(45deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'][index % 4]}, ${['#ff7675', '#55efc4', '#74b9ff', '#a8e6cf'][index % 4]})`,
-                      padding: '20px',
+                      padding: '15px',
                       color: 'white'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                        <div>
-                          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
+                        <div style={{ flex: 1 }}>
+                          <h3 style={{ 
+                            margin: 0, 
+                            fontSize: 'clamp(16px, 3vw, 18px)', 
+                            fontWeight: 'bold',
+                            lineHeight: '1.2'
+                          }}>
                             {displayData.first_name} {displayData.last_name}
                           </h3>
                           {isAdmin && (
                             <>
-                              <p style={{ margin: '5px 0', opacity: 0.9 }}>{student.email}</p>
+                              <p style={{ 
+                                margin: '5px 0', 
+                                opacity: 0.9,
+                                fontSize: 'clamp(12px, 2.5vw, 14px)',
+                                wordBreak: 'break-word'
+                              }}>
+                                {student.email}
+                              </p>
                               {student.profiles && (
-                                <p style={{ margin: '5px 0', opacity: 0.8, fontSize: '14px' }}>
+                                <p style={{ 
+                                  margin: '5px 0', 
+                                  opacity: 0.8, 
+                                  fontSize: 'clamp(11px, 2vw, 12px)'
+                                }}>
                                   Managed by: {student.profiles.email}
                                 </p>
                               )}
                             </>
                           )}
                           {!isAdmin && (
-                            <p style={{ margin: '5px 0', opacity: 0.9, fontSize: '14px' }}>
-                              👁️ Limited view - contact admin for full details
+                            <p style={{ 
+                              margin: '5px 0', 
+                              opacity: 0.9, 
+                              fontSize: 'clamp(11px, 2vw, 12px)'
+                            }}>
+                              👁️ Limited view
                             </p>
                           )}
                         </div>
@@ -543,10 +697,11 @@ export default function Dashboard({ user }) {
                             style={{
                               background: 'rgba(255, 255, 255, 0.2)',
                               border: 'none',
-                              borderRadius: '10px',
-                              padding: '8px',
+                              borderRadius: '8px',
+                              padding: '6px',
                               cursor: 'pointer',
-                              fontSize: '18px'
+                              fontSize: '16px',
+                              marginLeft: '10px'
                             }}
                           >
                             🗑️
@@ -554,20 +709,42 @@ export default function Dashboard({ user }) {
                         )}
                       </div>
                     </div>
-                    <div style={{ padding: '20px', color: 'white' }}>
+                    <div style={{ padding: '15px', color: 'white' }}>
                       {displayData.student_id && (
-                        <p style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '10px 0' }}>
+                        <p style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '8px', 
+                          margin: '8px 0',
+                          fontSize: 'clamp(12px, 2.5vw, 14px)'
+                        }}>
                           <span>🆔</span> ID: {displayData.student_id}
                         </p>
                       )}
                       {isAdmin && (
                         <>
-                          {student.grade_level && <p>🎓 Grade: {student.grade_level}</p>}
-                          <p>📅 Enrolled: {new Date(student.enrollment_date).toLocaleDateString()}</p>
+                          {student.grade_level && (
+                            <p style={{ 
+                              margin: '8px 0',
+                              fontSize: 'clamp(12px, 2.5vw, 14px)'
+                            }}>
+                              🎓 Grade: {student.grade_level}
+                            </p>
+                          )}
+                          <p style={{ 
+                            margin: '8px 0',
+                            fontSize: 'clamp(12px, 2.5vw, 14px)'
+                          }}>
+                            📅 Enrolled: {new Date(student.enrollment_date).toLocaleDateString()}
+                          </p>
                         </>
                       )}
                       {!isAdmin && !displayData.student_id && (
-                        <p style={{ opacity: 0.7, fontSize: '14px' }}>
+                        <p style={{ 
+                          opacity: 0.7, 
+                          fontSize: 'clamp(11px, 2vw, 12px)',
+                          fontStyle: 'italic'
+                        }}>
                           No additional details available
                         </p>
                       )}
@@ -579,43 +756,68 @@ export default function Dashboard({ user }) {
           </div>
         )}
 
-        {/* Table View */}
+        {/* Mobile-Friendly Table View */}
         {activeTab === 'table' && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '25px',
+            borderRadius: '20px',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             overflow: 'hidden'
           }}>
             <div style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              padding: '25px',
+              padding: '20px',
               textAlign: 'center'
             }}>
-              <h2 style={{ color: 'white', margin: 0, fontSize: '24px' }}>
+              <h2 style={{ 
+                color: 'white', 
+                margin: 0, 
+                fontSize: 'clamp(18px, 4vw, 22px)'
+              }}>
                 📊 Students Table ({students.length})
-                {!isAdmin && (
-                  <div style={{ fontSize: '14px', opacity: 0.8, marginTop: '5px' }}>
-                    Limited view for regular users
-                  </div>
-                )}
               </h2>
+              {!isAdmin && (
+                <div style={{ 
+                  fontSize: 'clamp(11px, 2vw, 13px)', 
+                  opacity: 0.8, 
+                  marginTop: '5px',
+                  color: 'white'
+                }}>
+                  Limited view for regular users
+                </div>
+              )}
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                 <thead>
                   <tr style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
-                    <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>First Name</th>
-                    <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Last Name</th>
-                    <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Student ID</th>
+                    <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '100px' }}>
+                      First Name
+                    </th>
+                    <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '100px' }}>
+                      Last Name
+                    </th>
+                    <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '100px' }}>
+                      Student ID
+                    </th>
                     {isAdmin && (
                       <>
-                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Email</th>
-                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Grade</th>
-                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Enrolled</th>
-                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Managed By</th>
-                        <th style={{ padding: '15px', color: 'white', textAlign: 'left' }}>Actions</th>
+                        <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '150px' }}>
+                          Email
+                        </th>
+                        <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '100px' }}>
+                          Grade
+                        </th>
+                        <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '100px' }}>
+                          Enrolled
+                        </th>
+                        <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '120px' }}>
+                          Managed By
+                        </th>
+                        <th style={{ padding: '12px 8px', color: 'white', textAlign: 'left', fontSize: '14px', minWidth: '80px' }}>
+                          Actions
+                        </th>
                       </>
                     )}
                   </tr>
@@ -629,20 +831,30 @@ export default function Dashboard({ user }) {
                       <tr key={student.id} style={{
                         background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)'
                       }}>
-                        <td style={{ padding: '15px', color: 'white' }}>{displayData.first_name}</td>
-                        <td style={{ padding: '15px', color: 'white' }}>{displayData.last_name}</td>
-                        <td style={{ padding: '15px', color: 'white' }}>{displayData.student_id || '—'}</td>
+                        <td style={{ padding: '12px 8px', color: 'white', fontSize: '14px' }}>
+                          {displayData.first_name}
+                        </td>
+                        <td style={{ padding: '12px 8px', color: 'white', fontSize: '14px' }}>
+                          {displayData.last_name}
+                        </td>
+                        <td style={{ padding: '12px 8px', color: 'white', fontSize: '14px' }}>
+                          {displayData.student_id || '—'}
+                        </td>
                         {isAdmin && (
                           <>
-                            <td style={{ padding: '15px', color: 'white' }}>{student.email}</td>
-                            <td style={{ padding: '15px', color: 'white' }}>{student.grade_level || '—'}</td>
-                            <td style={{ padding: '15px', color: 'white' }}>
+                            <td style={{ padding: '12px 8px', color: 'white', fontSize: '14px', wordBreak: 'break-word' }}>
+                              {student.email}
+                            </td>
+                            <td style={{ padding: '12px 8px', color: 'white', fontSize: '14px' }}>
+                              {student.grade_level || '—'}
+                            </td>
+                            <td style={{ padding: '12px 8px', color: 'white', fontSize: '14px' }}>
                               {new Date(student.enrollment_date).toLocaleDateString()}
                             </td>
-                            <td style={{ padding: '15px', color: 'white' }}>
+                            <td style={{ padding: '12px 8px', color: 'white', fontSize: '14px', wordBreak: 'break-word' }}>
                               {student.profiles?.email || 'Unknown'}
                             </td>
-                            <td style={{ padding: '15px' }}>
+                            <td style={{ padding: '12px 8px' }}>
                               {canEditThis && (
                                 <button
                                   onClick={() => deleteStudent(student.id)}
@@ -650,8 +862,8 @@ export default function Dashboard({ user }) {
                                     background: 'linear-gradient(45deg, #ff4757, #ff3742)',
                                     color: 'white',
                                     border: 'none',
-                                    padding: '8px 15px',
-                                    borderRadius: '20px',
+                                    padding: '6px 12px',
+                                    borderRadius: '15px',
                                     cursor: 'pointer',
                                     fontSize: '12px'
                                   }}
@@ -676,46 +888,63 @@ export default function Dashboard({ user }) {
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '25px',
+            borderRadius: '20px',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            padding: '30px'
+            padding: '20px'
           }}>
-            <h2 style={{ color: 'white', fontSize: '24px', marginBottom: '20px' }}>
-              👑 User Management (Admin Only)
+            <h2 style={{ 
+              color: 'white', 
+              fontSize: 'clamp(18px, 4vw, 22px)', 
+              marginBottom: '20px' 
+            }}>
+              👑 User Management
             </h2>
             <div style={{ display: 'grid', gap: '15px' }}>
               {allUsers.map(user => (
                 <div key={user.id} style={{
                   background: 'rgba(255, 255, 255, 0.1)',
-                  padding: '20px',
+                  padding: '15px',
                   borderRadius: '15px',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '10px'
                 }}>
-                  <div style={{ color: 'white' }}>
-                    <h3 style={{ margin: 0, fontSize: '18px' }}>{user.email}</h3>
-                    <p style={{ margin: '5px 0', opacity: 0.8 }}>
+                  <div style={{ color: 'white', flex: '1', minWidth: '200px' }}>
+                    <h3 style={{ 
+                      margin: 0, 
+                      fontSize: 'clamp(14px, 3vw, 16px)',
+                      wordBreak: 'break-word'
+                    }}>
+                      {user.email}
+                    </h3>
+                    <p style={{ 
+                      margin: '5px 0', 
+                      opacity: 0.8,
+                      fontSize: 'clamp(12px, 2.5vw, 14px)'
+                    }}>
                       Role: {user.role === 'admin' ? '👑 Admin' : '👤 User'}
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      onClick={() => updateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
-                      style={{
-                        background: user.role === 'admin' ? 'linear-gradient(45deg, #ff4757, #ff3742)' : 'linear-gradient(45deg, #ffd700, #ffed4a)',
-                        color: user.role === 'admin' ? 'white' : 'black',
-                        border: 'none',
-                        padding: '10px 20px',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => updateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                    style={{
+                      background: user.role === 'admin' 
+                        ? 'linear-gradient(45deg, #ff4757, #ff3742)' 
+                        : 'linear-gradient(45deg, #ffd700, #ffed4a)',
+                      color: user.role === 'admin' ? 'white' : 'black',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '15px',
+                      cursor: 'pointer',
+                      fontSize: 'clamp(11px, 2vw, 13px)',
+                      fontWeight: 'bold',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                  </button>
                 </div>
               ))}
             </div>
@@ -727,39 +956,57 @@ export default function Dashboard({ user }) {
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '25px',
+            borderRadius: '20px',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            padding: '30px'
+            padding: '20px'
           }}>
-            <h2 style={{ color: 'white', fontSize: '24px', marginBottom: '20px' }}>
-              🔧 Raw Data {!isAdmin && '(Limited View)'}
+            <h2 style={{ 
+              color: 'white', 
+              fontSize: 'clamp(18px, 4vw, 22px)', 
+              marginBottom: '20px' 
+            }}>
+              🔧 Raw Data {!isAdmin && '(Limited)'}
             </h2>
             <div style={{ display: 'grid', gap: '20px' }}>
               <div>
-                <h3 style={{ color: 'white', marginBottom: '10px' }}>Your Profile:</h3>
+                <h3 style={{ 
+                  color: 'white', 
+                  marginBottom: '10px',
+                  fontSize: 'clamp(14px, 3vw, 16px)'
+                }}>
+                  Your Profile:
+                </h3>
                 <pre style={{
                   background: 'rgba(0, 0, 0, 0.3)',
                   color: '#00ff00',
-                  padding: '20px',
-                  borderRadius: '15px',
-                  fontSize: '14px',
-                  overflow: 'auto'
+                  padding: '15px',
+                  borderRadius: '10px',
+                  fontSize: 'clamp(10px, 2vw, 12px)',
+                  overflow: 'auto',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap'
                 }}>
                   {JSON.stringify(userProfile, null, 2)}
                 </pre>
               </div>
               <div>
-                <h3 style={{ color: 'white', marginBottom: '10px' }}>
+                <h3 style={{ 
+                  color: 'white', 
+                  marginBottom: '10px',
+                  fontSize: 'clamp(14px, 3vw, 16px)'
+                }}>
                   Students Data {!isAdmin && '(Filtered)'}:
                 </h3>
                 <pre style={{
                   background: 'rgba(0, 0, 0, 0.3)',
                   color: '#00ff00',
-                  padding: '20px',
-                  borderRadius: '15px',
-                  fontSize: '14px',
+                  padding: '15px',
+                  borderRadius: '10px',
+                  fontSize: 'clamp(10px, 2vw, 12px)',
                   overflow: 'auto',
-                  maxHeight: '400px'
+                  maxHeight: '300px',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap'
                 }}>
                   {JSON.stringify(
                     isAdmin 
@@ -770,16 +1017,24 @@ export default function Dashboard({ user }) {
                   )}
                 </pre>
               </div>
-              {isAdmin && (
+              {isAdmin && allUsers.length > 0 && (
                 <div>
-                  <h3 style={{ color: 'white', marginBottom: '10px' }}>All Users (Admin Only):</h3>
+                  <h3 style={{ 
+                    color: 'white', 
+                    marginBottom: '10px',
+                    fontSize: 'clamp(14px, 3vw, 16px)'
+                  }}>
+                    All Users (Admin Only):
+                  </h3>
                   <pre style={{
                     background: 'rgba(0, 0, 0, 0.3)',
                     color: '#00ff00',
-                    padding: '20px',
-                    borderRadius: '15px',
-                    fontSize: '14px',
-                    overflow: 'auto'
+                    padding: '15px',
+                    borderRadius: '10px',
+                    fontSize: 'clamp(10px, 2vw, 12px)',
+                    overflow: 'auto',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap'
                   }}>
                     {JSON.stringify(allUsers, null, 2)}
                   </pre>
@@ -789,6 +1044,31 @@ export default function Dashboard({ user }) {
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .tab-label {
+            display: none;
+          }
+        }
+        
+        /* Hide scrollbar for tab container */
+        div::-webkit-scrollbar {
+          display: none;
+        }
+        
+        /* Ensure inputs work well on mobile */
+        input, select, textarea {
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+          outline: none;
+          border-color: #4ecdc4 !important;
+          box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.3) !important;
+        }
+      `}</style>
     </div>
   )
 }
