@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import Dashboard from './Dashboard'
@@ -376,14 +377,30 @@ export default function App() {
   // Simple routing based on URL path and hash
   const path = window.location.pathname
   const hash = window.location.hash
-  const hasAuthParams = hash.includes('access_token') || hash.includes('type=recovery') || hash.includes('type=signup')
+  const hasSignupParams = hash.includes('type=signup')
+  const hasRecoveryParams = hash.includes('type=recovery')
 
   console.log('Current path:', path)
   console.log('Current hash:', hash)
-  console.log('Has auth params:', hasAuthParams)
+  console.log('Has signup params:', hasSignupParams)
+  console.log('Has recovery params:', hasRecoveryParams)
 
-  // Handle auth callback URLs (password reset, email confirmation) - but not if already on reset-password page
-  if (hasAuthParams && path !== '/reset-password') {
+  // Handle auth callback path
+  if (path === '/auth/callback') {
+    if (hasRecoveryParams) {
+      return <ResetPassword />
+    } else {
+      return <AuthCallback />
+    }
+  }
+
+  // Handle password recovery - always go to reset password page
+  if (hasRecoveryParams) {
+    return <ResetPassword />
+  }
+
+  // Handle signup confirmations only
+  if (hasSignupParams) {
     return <AuthCallback />
   }
 
