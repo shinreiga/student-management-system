@@ -14,11 +14,18 @@ export default function Auth() {
     
     try {
       if (isReset) {
-        // Password reset - Use current domain
+        // Password reset - Force current domain, no hardcoded URLs
+        const currentDomain = window.location.origin
+        console.log('Current domain:', currentDomain)
+        console.log('Sending reset email to:', email)
+        
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: currentDomain,
         })
-        if (error) throw error
+        if (error) {
+          console.error('Password reset error:', error)
+          throw error
+        }
         alert('Password reset link sent to your email!')
         setIsReset(false)
       } else if (isSignUp) {
