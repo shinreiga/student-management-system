@@ -625,8 +625,4 @@ export default function Dashboard({ user }) {
       </div>
     </div>
   )
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 87bb0ff5dec295dc69349c049aecc46b69f491f5
