@@ -4,7 +4,7 @@ import Dashboard from './Dashboard'
 import Auth from './Auth'
 
 // Reset Password Component
-function ResetPassword({ onComplete }) {
+function ResetPassword({ tokens, onComplete }) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -12,27 +12,43 @@ function ResetPassword({ onComplete }) {
   const [resetTokens, setResetTokens] = useState(null)
 
   useEffect(() => {
-    // Check if there are reset tokens in the URL hash
-    const hash = window.location.hash.substring(1)
-    console.log('ResetPassword: Checking hash:', hash)
-    
-    const hashParams = new URLSearchParams(hash)
-    const accessToken = hashParams.get('access_token')
-    const refreshToken = hashParams.get('refresh_token')
-    const type = hashParams.get('type')
-    
-    console.log('ResetPassword: Found tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type })
-    
-    if (type === 'recovery' && accessToken && refreshToken) {
-      console.log('ResetPassword: Valid recovery tokens found')
+    // First, check if tokens were passed from App component
+    if (tokens && tokens.accessToken && tokens.refreshToken) {
+      console.log('ResetPassword: Using tokens from App component')
       setHasValidTokens(true)
-      setResetTokens({ accessToken, refreshToken })
-      // Clear the hash from URL but keep the tokens in state
-      window.history.replaceState(null, '', '/reset-password')
-    } else {
-      console.log('ResetPassword: No valid tokens found')
+      setResetTokens(tokens)
+      return
     }
-  }, [])
+
+    // Fallback: Check if there are reset tokens in the URL hash
+    const hash = window.location.hash.substring(1)
+    console.log('ResetPassword: Full hash string:', hash)
+    
+    if (hash) {
+      const hashParams = new URLSearchParams(hash)
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      const type = hashParams.get('type')
+      
+      console.log('ResetPassword: Parsed values:')
+      console.log('- accessToken exists:', !!accessToken)
+      console.log('- refreshToken exists:', !!refreshToken) 
+      console.log('- type:', type)
+      
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log('ResetPassword: ✅ Valid recovery tokens found')
+        setHasValidTokens(true)
+        setResetTokens({ accessToken, refreshToken })
+        // Clear the hash from URL but keep the tokens in state
+        window.history.replaceState(null, '', window.location.pathname)
+      } else {
+        console.log('ResetPassword: ❌ Invalid or missing tokens')
+        console.log('Expected type=recovery, got:', type)
+      }
+    } else {
+      console.log('ResetPassword: No hash found in URL')
+    }
+  }, [tokens])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -354,12 +370,27 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isPasswordReset, setIsPasswordReset] = useState(false)
+  const [resetTokens, setResetTokens] = useState(null)
 
   useEffect(() => {
     // Check for recovery tokens on initial load
-    const hash = window.location.hash
+    const hash = window.location.hash.substring(1)
+    console.log('App: Checking initial hash:', hash)
+    
     if (hash.includes('type=recovery')) {
-      setIsPasswordReset(true)
+      const hashParams = new URLSearchParams(hash)
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      const type = hashParams.get('type')
+      
+      console.log('App: Found recovery tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type })
+      
+      if (type === 'recovery' && accessToken && refreshToken) {
+        setIsPasswordReset(true)
+        setResetTokens({ accessToken, refreshToken })
+        // Clear the hash immediately to prevent issues
+        window.history.replaceState(null, '', window.location.pathname)
+      }
     }
 
     // Get initial session
@@ -404,11 +435,18 @@ export default function App() {
   console.log('Has recovery params:', hasRecoveryParams)
   console.log('Session exists:', !!session)
   console.log('Is password reset state:', isPasswordReset)
+  console.log('Reset tokens available:', !!resetTokens)
 
   // PRIORITY 1: Handle password recovery - ALWAYS show reset form for recovery tokens
   if (hasRecoveryParams) {
     console.log('Showing ResetPassword component due to recovery params')
-    return <ResetPassword onComplete={() => setIsPasswordReset(false)} />
+    return <ResetPassword 
+      tokens={resetTokens} 
+      onComplete={() => {
+        setIsPasswordReset(false)
+        setResetTokens(null)
+      }} 
+    />
   }
 
   // PRIORITY 2: Handle auth callback path
