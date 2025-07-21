@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 
 export default function Dashboard({ user }) {
   const [students, setStudents] = useState([])
+  const [users, setUsers] = useState([])
   const [userProfile, setUserProfile] = useState(null)
   const [newStudent, setNewStudent] = useState({
     first_name: '',
@@ -11,13 +12,22 @@ export default function Dashboard({ user }) {
     student_id: '',
     grade_level: ''
   })
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    role: 'user'
+  })
   const [loading, setLoading] = useState(false)
+  const [userLoading, setUserLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('students')
 
   useEffect(() => {
     fetchUserProfile()
     fetchStudents()
-  }, [])
+    if (userProfile?.role === 'admin') {
+      fetchUsers()
+    }
+  }, [userProfile])
 
   const fetchUserProfile = async () => {
     const { data, error } = await supabase
@@ -49,6 +59,17 @@ export default function Dashboard({ user }) {
 
     if (!error) {
       setStudents(data || [])
+    }
+  }
+
+  const fetchUsers = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (!error) {
+      setUsers(data || [])
     }
   }
 
@@ -84,6 +105,46 @@ export default function Dashboard({ user }) {
     setLoading(false)
   }
 
+  const createUser = async (e) => {
+    e.preventDefault()
+    setUserLoading(true)
+
+    try {
+      // Create user via Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+      })
+
+      if (authError) throw authError
+
+      if (authData.user) {
+        // Create/update profile with role
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert([
+            {
+              id: authData.user.id,
+              email: newUser.email,
+              role: newUser.role,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ])
+
+        if (profileError) throw profileError
+
+        alert('User created successfully!')
+        setNewUser({ email: '', password: '', role: 'user' })
+        fetchUsers()
+      }
+    } catch (error) {
+      alert('Error creating user: ' + error.message)
+    }
+
+    setUserLoading(false)
+  }
+
   const deleteStudent = async (studentId) => {
     if (confirm('Are you sure you want to delete this student?')) {
       const { error } = await supabase
@@ -93,6 +154,50 @@ export default function Dashboard({ user }) {
 
       if (!error) {
         fetchStudents()
+      }
+    }
+  }
+
+  const deleteUser = async (userId) => {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId)
+
+      if (!error) {
+        alert('User deleted successfully!')
+        fetchUsers()
+      } else {
+        alert('Error deleting user: ' + error.message)
+      }
+    }
+  }
+
+  const updateUserRole = async (userId, newRole) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+
+    if (!error) {
+      alert('User role updated successfully!')
+      fetchUsers()
+    } else {
+      alert('Error updating user role: ' + error.message)
+    }
+  }
+
+  const resetUserPassword = async (userEmail) => {
+    if (confirm(`Send password reset email to ${userEmail}?`)) {
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+        redirectTo: 'https://www.shinreiga.net/',
+      })
+
+      if (!error) {
+        alert('Password reset email sent successfully!')
+      } else {
+        alert('Error sending password reset email: ' + error.message)
       }
     }
   }
@@ -208,7 +313,11 @@ export default function Dashboard({ user }) {
             {[
               { id: 'students', label: 'Members', icon: '👥' },
               { id: 'table', label: 'Table View', icon: '📋' },
-              ...(isAdmin ? [{ id: 'add', label: 'Add Member', icon: '➕' }] : [])
+              ...(isAdmin ? [
+                { id: 'add', label: 'Add Member', icon: '➕' },
+                { id: 'users', label: 'User Management', icon: '👤' },
+                { id: 'adduser', label: 'Add User', icon: '🆕' }
+              ] : [])
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -393,6 +502,256 @@ export default function Dashboard({ user }) {
                 }}
               >
                 {loading ? 'Adding...' : 'Add Member'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* User Management Tab (Admin Only) */}
+        {activeTab === 'users' && isAdmin && (
+          <div>
+            <h2 style={{ 
+              margin: '0 0 20px 0',
+              fontSize: '24px',
+              color: '#1f2937'
+            }}>
+              User Management ({users.length} users)
+            </h2>
+            
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                background: '#374151',
+                color: 'white',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '20px' }}>
+                  👤 System Users
+                </h3>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#f8f9fa' }}>
+                      <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Email</th>
+                      <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Role</th>
+                      <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Created</th>
+                      <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((userItem, index) => (
+                      <tr key={userItem.id} style={{
+                        background: index % 2 === 0 ? 'white' : '#f8f9fa'
+                      }}>
+                        <td style={{ padding: '15px', fontWeight: 'bold' }}>
+                          {userItem.email}
+                          {userItem.id === user.id && (
+                            <span style={{ 
+                              marginLeft: '8px', 
+                              fontSize: '12px', 
+                              color: '#059669',
+                              fontWeight: 'normal'
+                            }}>
+                              (You)
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '15px' }}>
+                          <select
+                            value={userItem.role || 'user'}
+                            onChange={(e) => updateUserRole(userItem.id, e.target.value)}
+                            disabled={userItem.id === user.id}
+                            style={{
+                              padding: '6px 10px',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              background: userItem.role === 'admin' ? '#dc2626' : '#374151',
+                              color: 'white'
+                            }}
+                          >
+                            <option value="user">Member</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td style={{ padding: '15px' }}>
+                          {userItem.created_at ? new Date(userItem.created_at).toLocaleDateString() : '—'}
+                        </td>
+                        <td style={{ padding: '15px' }}>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => resetUserPassword(userItem.email)}
+                              style={{
+                                background: '#059669',
+                                color: 'white',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Reset Password
+                            </button>
+                            {userItem.id !== user.id && (
+                              <button
+                                onClick={() => deleteUser(userItem.id)}
+                                style={{
+                                  background: '#dc2626',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '6px 12px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {users.length === 0 && (
+              <div style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '20px' }}>👤</div>
+                <h3 style={{ color: '#374151' }}>No users found</h3>
+                <p style={{ color: '#6b7280' }}>
+                  Add users using the "Add User" tab.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Add User Form (Admin Only) */}
+        {activeTab === 'adduser' && isAdmin && (
+          <div style={{
+            background: 'white',
+            borderRadius: '8px',
+            padding: '30px',
+            marginBottom: '30px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 20px 0',
+              fontSize: '24px',
+              color: '#1f2937'
+            }}>
+              Add New User
+            </h2>
+            <form onSubmit={createUser}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '20px',
+                marginBottom: '20px'
+              }}>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px',
+                    fontWeight: 'bold',
+                    color: '#374151'
+                  }}>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px',
+                    fontWeight: 'bold',
+                    color: '#374151'
+                  }}>
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px',
+                    fontWeight: 'bold',
+                    color: '#374151'
+                  }}>
+                    Role
+                  </label>
+                  <select
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value="user">Member</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={userLoading}
+                style={{
+                  background: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                {userLoading ? 'Creating...' : 'Create User'}
               </button>
             </form>
           </div>
