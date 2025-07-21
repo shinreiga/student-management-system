@@ -15,7 +15,7 @@ export default function Auth() {
     try {
       if (isReset) {
         // Password reset - Use exact domain with www
-        const redirectUrl = 'https://www.shinreiga.net/auth/callback'
+        const redirectUrl = 'https://www.shinreiga.net/'
         console.log('Current domain:', window.location.origin)
         console.log('Redirect URL being sent:', redirectUrl)
         console.log('Sending reset email to:', email)
