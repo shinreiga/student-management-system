@@ -27,7 +27,21 @@ function ResetPassword() {
       console.log('ResetPassword: Valid recovery tokens found')
       setHasValidTokens(true)
       setResetTokens({ accessToken, refreshToken })
-      // Clear the hash from URL but keep the tokens in state
+      
+      // Set the session immediately to avoid token expiry
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('ResetPassword: Error setting session:', error)
+          setHasValidTokens(false)
+        } else {
+          console.log('ResetPassword: Session set successfully')
+        }
+      })
+      
+      // Clear the hash from URL
       window.history.replaceState(null, '', '/reset-password')
     } else {
       console.log('ResetPassword: No valid tokens found')
@@ -55,19 +69,8 @@ function ResetPassword() {
     setLoading(true)
 
     try {
-      console.log('ResetPassword: Setting session with tokens')
-      // First set the session with the reset tokens
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: resetTokens.accessToken,
-        refresh_token: resetTokens.refreshToken
-      })
-
-      if (sessionError) {
-        throw sessionError
-      }
-
       console.log('ResetPassword: Updating password')
-      // Now update the password
+      // The session should already be set from useEffect
       const { error } = await supabase.auth.updateUser({
         password: password
       })
