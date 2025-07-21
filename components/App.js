@@ -14,16 +14,23 @@ function ResetPassword() {
   useEffect(() => {
     // Check if there are reset tokens in the URL hash
     const hash = window.location.hash.substring(1)
+    console.log('ResetPassword: Checking hash:', hash)
+    
     const hashParams = new URLSearchParams(hash)
     const accessToken = hashParams.get('access_token')
     const refreshToken = hashParams.get('refresh_token')
     const type = hashParams.get('type')
     
+    console.log('ResetPassword: Found tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type })
+    
     if (type === 'recovery' && accessToken && refreshToken) {
+      console.log('ResetPassword: Valid recovery tokens found')
       setHasValidTokens(true)
       setResetTokens({ accessToken, refreshToken })
-      // Clear the hash from URL
+      // Clear the hash from URL but keep the tokens in state
       window.history.replaceState(null, '', '/reset-password')
+    } else {
+      console.log('ResetPassword: No valid tokens found')
     }
   }, [])
 
@@ -48,6 +55,7 @@ function ResetPassword() {
     setLoading(true)
 
     try {
+      console.log('ResetPassword: Setting session with tokens')
       // First set the session with the reset tokens
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: resetTokens.accessToken,
@@ -58,6 +66,7 @@ function ResetPassword() {
         throw sessionError
       }
 
+      console.log('ResetPassword: Updating password')
       // Now update the password
       const { error } = await supabase.auth.updateUser({
         password: password
@@ -383,32 +392,36 @@ export default function App() {
   console.log('Current hash:', hash)
   console.log('Has signup params:', hasSignupParams)
   console.log('Has recovery params:', hasRecoveryParams)
+  console.log('Session exists:', !!session)
 
-  // Handle auth callback path
-  if (path === '/auth/callback') {
-    if (hasRecoveryParams) {
-      return <ResetPassword />
-    } else {
-      return <AuthCallback />
-    }
-  }
-
-  // Handle password recovery - always go to reset password page
+  // PRIORITY 1: Handle password recovery - ALWAYS show reset form for recovery tokens
   if (hasRecoveryParams) {
+    console.log('Showing ResetPassword component due to recovery params')
     return <ResetPassword />
   }
 
-  // Handle signup confirmations only
+  // PRIORITY 2: Handle auth callback path
+  if (path === '/auth/callback') {
+    if (hasSignupParams) {
+      return <AuthCallback />
+    } else {
+      // If no specific params, redirect to home
+      window.location.href = '/'
+      return null
+    }
+  }
+
+  // PRIORITY 3: Handle signup confirmations
   if (hasSignupParams) {
     return <AuthCallback />
   }
 
-  // Handle reset password page
+  // PRIORITY 4: Handle reset password page
   if (path === '/reset-password') {
     return <ResetPassword />
   }
 
-  // Main app logic
+  // PRIORITY 5: Main app logic
   if (!session) {
     return <Auth />
   }
