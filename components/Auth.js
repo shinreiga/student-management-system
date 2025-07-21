@@ -11,21 +11,29 @@ export default function Auth() {
   const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
-
+    
     try {
       if (isReset) {
-        // Password reset
+        // Password reset - Updated redirect URL
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: 'https://student-management-system.vercel.app/auth/callback',
         })
         if (error) throw error
         alert('Password reset link sent to your email!')
         setIsReset(false)
       } else if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password })
+        // Sign up with proper redirect
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            emailRedirectTo: 'https://student-management-system.vercel.app/auth/callback',
+          }
+        })
         if (error) throw error
         alert('Check your email for confirmation link!')
       } else {
+        // Sign in
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
       }
