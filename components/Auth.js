@@ -14,13 +14,14 @@ export default function Auth() {
     
     try {
       if (isReset) {
-        // Password reset - Force current domain, no hardcoded URLs
-        const currentDomain = window.location.origin
-        console.log('Current domain:', currentDomain)
+        // Password reset - Use exact domain with www
+        const redirectUrl = 'https://www.shinreiga.net/auth/callback'
+        console.log('Current domain:', window.location.origin)
+        console.log('Redirect URL being sent:', redirectUrl)
         console.log('Sending reset email to:', email)
         
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: currentDomain,
+          redirectTo: redirectUrl,
         })
         if (error) {
           console.error('Password reset error:', error)
