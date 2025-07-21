@@ -68,6 +68,10 @@ function ResetPassword() {
         alert('Error updating password: ' + error.message)
       } else {
         alert('Password updated successfully!')
+        // Clear any reset flow indicators
+        sessionStorage.removeItem('reset_access_token')
+        sessionStorage.removeItem('reset_refresh_token')
+        // Redirect to dashboard
         window.location.href = '/'
       }
     } catch (error) {
@@ -366,18 +370,24 @@ export default function App() {
   const path = window.location.pathname
   const hash = window.location.hash
   const hasAuthParams = hash.includes('access_token') || hash.includes('type=recovery') || hash.includes('type=signup')
+  
+  // Check if we're in password reset flow
+  const isPasswordResetFlow = sessionStorage.getItem('reset_access_token') || 
+                              hash.includes('type=recovery') ||
+                              path === '/reset-password'
 
   console.log('Current path:', path)
   console.log('Current hash:', hash)
   console.log('Has auth params:', hasAuthParams)
+  console.log('Is password reset flow:', isPasswordResetFlow)
 
   // Handle auth callback URLs (password reset, email confirmation)
-  if (hasAuthParams || path === '/auth/callback') {
+  if (hasAuthParams && !path.includes('/reset-password')) {
     return <AuthCallback />
   }
 
-  // Handle reset password page - prioritize this even if user has session
-  if (path === '/reset-password') {
+  // Handle reset password page - show this even if user has session during reset flow
+  if (path === '/reset-password' || isPasswordResetFlow) {
     return <ResetPassword />
   }
 
