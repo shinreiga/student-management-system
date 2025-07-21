@@ -14,9 +14,9 @@ export default function Auth() {
     
     try {
       if (isReset) {
-        // Password reset - Updated redirect URL
+        // Password reset - Updated to redirect to root URL
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: 'https://student-management-system.vercel.app/auth/callback',
+          redirectTo: 'https://student-management-system.vercel.app/',
         })
         if (error) throw error
         alert('Password reset link sent to your email!')
@@ -27,7 +27,7 @@ export default function Auth() {
           email, 
           password,
           options: {
-            emailRedirectTo: 'https://student-management-system.vercel.app/auth/callback',
+            emailRedirectTo: 'https://student-management-system.vercel.app/',
           }
         })
         if (error) throw error
