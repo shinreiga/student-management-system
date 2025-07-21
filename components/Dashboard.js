@@ -97,11 +97,22 @@ export default function Dashboard({ user }) {
     }
   }
 
-  const signOut = () => {
-    supabase.auth.signOut()
-    window.location.reload()
+const signOut = async () => {
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Error signing out:', error)
+      alert('Error signing out: ' + error.message)
+    } else {
+      // Optionally redirect to login page instead of reload
+      window.location.reload()
+      // Or redirect to a specific page:
+      // window.location.href = '/login'
+    }
+  } catch (error) {
+    console.error('Unexpected error:', error)
   }
-
+}
   const isAdmin = userProfile?.role === 'admin'
   const canEdit = (studentUserId) => isAdmin || studentUserId === user.id
 
