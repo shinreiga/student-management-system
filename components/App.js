@@ -11,9 +11,29 @@ function ResetPassword() {
   const [session, setSession] = useState(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+    // Check for stored reset tokens first
+    const resetAccessToken = sessionStorage.getItem('reset_access_token')
+    const resetRefreshToken = sessionStorage.getItem('reset_refresh_token')
+    
+    if (resetAccessToken && resetRefreshToken) {
+      // Set session with the reset tokens
+      supabase.auth.setSession({
+        access_token: resetAccessToken,
+        refresh_token: resetRefreshToken
+      }).then(({ data: { session }, error }) => {
+        if (!error && session) {
+          setSession(session)
+          // Clear the stored tokens
+          sessionStorage.removeItem('reset_access_token')
+          sessionStorage.removeItem('reset_refresh_token')
+        }
+      })
+    } else {
+      // Normal session check
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session)
+      })
+    }
 
     const {
       data: { subscription },
@@ -200,21 +220,13 @@ function AuthCallback() {
         console.log('Auth callback type:', type)
 
         if (type === 'recovery' && accessToken && refreshToken) {
-          // This is a password recovery callback
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          })
-
-          if (error) {
-            console.error('Error setting session:', error)
-            setError('Invalid or expired reset link')
-          } else {
-            console.log('Session set successfully for password reset:', data)
-            // Clear the hash and redirect to reset password form
-            window.history.replaceState(null, '', window.location.pathname)
-            window.location.href = '/reset-password'
-          }
+          // Store the tokens temporarily and redirect to reset password
+          sessionStorage.setItem('reset_access_token', accessToken)
+          sessionStorage.setItem('reset_refresh_token', refreshToken)
+          
+          // Clear hash and redirect to reset password form
+          window.history.replaceState(null, '', '/reset-password')
+          window.location.reload()
         } else if (type === 'signup') {
           const { error } = await supabase.auth.verifyOtp({
             token_hash: window.location.hash,
@@ -364,7 +376,7 @@ export default function App() {
     return <AuthCallback />
   }
 
-  // Handle reset password page
+  // Handle reset password page - prioritize this even if user has session
   if (path === '/reset-password') {
     return <ResetPassword />
   }
