@@ -8,7 +8,8 @@ function ResetPassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [session, setSession] = useState(null)
+  const [hasValidTokens, setHasValidTokens] = useState(false)
+  const [resetTokens, setResetTokens] = useState(null)
 
   useEffect(() => {
     // Check if there are reset tokens in the URL hash
@@ -19,31 +20,11 @@ function ResetPassword() {
     const type = hashParams.get('type')
     
     if (type === 'recovery' && accessToken && refreshToken) {
-      // Set session with the recovery tokens
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken
-      }).then(({ data: { session }, error }) => {
-        if (!error && session) {
-          setSession(session)
-          // Clear the hash
-          window.history.replaceState(null, '', '/reset-password')
-        }
-      })
-    } else {
-      // Normal session check
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session)
-      })
+      setHasValidTokens(true)
+      setResetTokens({ accessToken, refreshToken })
+      // Clear the hash from URL
+      window.history.replaceState(null, '', '/reset-password')
     }
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
   }, [])
 
   const handleSubmit = async (e) => {
@@ -59,28 +40,44 @@ function ResetPassword() {
       return
     }
 
+    if (!resetTokens) {
+      alert('Invalid reset session. Please request a new password reset.')
+      return
+    }
+
     setLoading(true)
 
     try {
+      // First set the session with the reset tokens
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: resetTokens.accessToken,
+        refresh_token: resetTokens.refreshToken
+      })
+
+      if (sessionError) {
+        throw sessionError
+      }
+
+      // Now update the password
       const { error } = await supabase.auth.updateUser({
         password: password
       })
 
       if (error) {
-        alert('Error updating password: ' + error.message)
-      } else {
-        alert('Password updated successfully!')
-        window.location.href = '/'
+        throw error
       }
-    } catch (error) {
-      console.error('Unexpected error:', error)
-      alert('An unexpected error occurred')
-    }
 
-    setLoading(false)
+      alert('Password updated successfully!')
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Password update error:', error)
+      alert('Error updating password: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (!session) {
+  if (!hasValidTokens) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -133,7 +130,7 @@ function ResetPassword() {
         maxWidth: '400px'
       }}>
         <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>
-          Reset Your Password
+          🔒 Reset Your Password
         </h2>
         
         <form onSubmit={handleSubmit}>
@@ -156,6 +153,7 @@ function ResetPassword() {
                 borderRadius: '6px',
                 fontSize: '14px'
               }}
+              placeholder="Enter your new password"
               required
             />
           </div>
@@ -179,6 +177,7 @@ function ResetPassword() {
                 borderRadius: '6px',
                 fontSize: '14px'
               }}
+              placeholder="Confirm your new password"
               required
             />
           </div>
@@ -198,9 +197,24 @@ function ResetPassword() {
               fontWeight: 'bold'
             }}
           >
-            {loading ? 'Updating...' : 'Update Password'}
+            {loading ? 'Updating Password...' : 'Update Password'}
           </button>
         </form>
+        
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <button
+            onClick={() => window.location.href = '/'}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#6b7280',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   )
