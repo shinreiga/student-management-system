@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { supabase } from './lib/supabase'
-import Dashboard from './components/Dashboard'
-import Auth from './components/Auth'
+import { supabase } from '../lib/supabase'
+import Dashboard from './Dashboard'
+import Auth from './Auth'
 
 // Reset Password Component
 function ResetPassword() {
@@ -284,4 +284,87 @@ function AuthCallback() {
           padding: '40px',
           borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          
+          textAlign: 'center',
+          maxWidth: '400px'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>❌</div>
+          <h3 style={{ color: '#dc2626', marginBottom: '20px' }}>Authentication Error</h3>
+          <p style={{ color: '#6b7280', marginBottom: '30px' }}>{error}</p>
+          <button
+            onClick={() => window.location.href = '/'}
+            style={{
+              background: '#dc2626',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+// Main App Component
+export default function App() {
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: '#f8f9fa'
+      }}>
+        <div>Loading...</div>
+      </div>
+    )
+  }
+
+  // Simple routing based on URL path
+  const path = window.location.pathname
+  const hasAuthParams = window.location.hash.includes('access_token')
+
+  // Handle auth callback URLs (password reset, email confirmation)
+  if (hasAuthParams || path === '/auth/callback') {
+    return <AuthCallback />
+  }
+
+  // Handle reset password page
+  if (path === '/reset-password') {
+    return <ResetPassword />
+  }
+
+  // Main app logic
+  if (!session) {
+    return <Auth />
+  }
+
+  return <Dashboard user={session.user} />
+}
