@@ -11,21 +11,23 @@ function ResetPassword() {
   const [session, setSession] = useState(null)
 
   useEffect(() => {
-    // Check for stored reset tokens first
-    const resetAccessToken = sessionStorage.getItem('reset_access_token')
-    const resetRefreshToken = sessionStorage.getItem('reset_refresh_token')
+    // Check if there are reset tokens in the URL hash
+    const hash = window.location.hash.substring(1)
+    const hashParams = new URLSearchParams(hash)
+    const accessToken = hashParams.get('access_token')
+    const refreshToken = hashParams.get('refresh_token')
+    const type = hashParams.get('type')
     
-    if (resetAccessToken && resetRefreshToken) {
-      // Set session with the reset tokens
+    if (type === 'recovery' && accessToken && refreshToken) {
+      // Set session with the recovery tokens
       supabase.auth.setSession({
-        access_token: resetAccessToken,
-        refresh_token: resetRefreshToken
+        access_token: accessToken,
+        refresh_token: refreshToken
       }).then(({ data: { session }, error }) => {
         if (!error && session) {
           setSession(session)
-          // Clear the stored tokens
-          sessionStorage.removeItem('reset_access_token')
-          sessionStorage.removeItem('reset_refresh_token')
+          // Clear the hash
+          window.history.replaceState(null, '', '/reset-password')
         }
       })
     } else {
@@ -68,10 +70,6 @@ function ResetPassword() {
         alert('Error updating password: ' + error.message)
       } else {
         alert('Password updated successfully!')
-        // Clear any reset flow indicators
-        sessionStorage.removeItem('reset_access_token')
-        sessionStorage.removeItem('reset_refresh_token')
-        // Redirect to dashboard
         window.location.href = '/'
       }
     } catch (error) {
@@ -224,13 +222,8 @@ function AuthCallback() {
         console.log('Auth callback type:', type)
 
         if (type === 'recovery' && accessToken && refreshToken) {
-          // Store the tokens temporarily and redirect to reset password
-          sessionStorage.setItem('reset_access_token', accessToken)
-          sessionStorage.setItem('reset_refresh_token', refreshToken)
-          
-          // Clear hash and redirect to reset password form
-          window.history.replaceState(null, '', '/reset-password')
-          window.location.reload()
+          // Just redirect to reset password page with the tokens in the URL
+          window.location.href = `/reset-password#access_token=${accessToken}&refresh_token=${refreshToken}&type=recovery`
         } else if (type === 'signup') {
           const { error } = await supabase.auth.verifyOtp({
             token_hash: window.location.hash,
@@ -370,24 +363,18 @@ export default function App() {
   const path = window.location.pathname
   const hash = window.location.hash
   const hasAuthParams = hash.includes('access_token') || hash.includes('type=recovery') || hash.includes('type=signup')
-  
-  // Check if we're in password reset flow
-  const isPasswordResetFlow = sessionStorage.getItem('reset_access_token') || 
-                              hash.includes('type=recovery') ||
-                              path === '/reset-password'
 
   console.log('Current path:', path)
   console.log('Current hash:', hash)
   console.log('Has auth params:', hasAuthParams)
-  console.log('Is password reset flow:', isPasswordResetFlow)
 
-  // Handle auth callback URLs (password reset, email confirmation)
-  if (hasAuthParams && !path.includes('/reset-password')) {
+  // Handle auth callback URLs (password reset, email confirmation) - but not if already on reset-password page
+  if (hasAuthParams && path !== '/reset-password') {
     return <AuthCallback />
   }
 
-  // Handle reset password page - show this even if user has session during reset flow
-  if (path === '/reset-password' || isPasswordResetFlow) {
+  // Handle reset password page
+  if (path === '/reset-password') {
     return <ResetPassword />
   }
 
