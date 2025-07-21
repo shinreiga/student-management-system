@@ -4,7 +4,7 @@ import Dashboard from './Dashboard'
 import Auth from './Auth'
 
 // Reset Password Component
-function ResetPassword() {
+function ResetPassword({ onComplete }) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -79,6 +79,7 @@ function ResetPassword() {
       }
 
       alert('Password updated successfully!')
+      if (onComplete) onComplete()
       window.location.href = '/'
     } catch (error) {
       console.error('Password update error:', error)
@@ -352,8 +353,15 @@ function AuthCallback() {
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isPasswordReset, setIsPasswordReset] = useState(false)
 
   useEffect(() => {
+    // Check for recovery tokens on initial load
+    const hash = window.location.hash
+    if (hash.includes('type=recovery')) {
+      setIsPasswordReset(true)
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -388,18 +396,19 @@ export default function App() {
   const path = window.location.pathname
   const hash = window.location.hash
   const hasSignupParams = hash.includes('type=signup')
-  const hasRecoveryParams = hash.includes('type=recovery')
+  const hasRecoveryParams = hash.includes('type=recovery') || isPasswordReset
 
   console.log('Current path:', path)
   console.log('Current hash:', hash)
   console.log('Has signup params:', hasSignupParams)
   console.log('Has recovery params:', hasRecoveryParams)
   console.log('Session exists:', !!session)
+  console.log('Is password reset state:', isPasswordReset)
 
   // PRIORITY 1: Handle password recovery - ALWAYS show reset form for recovery tokens
   if (hasRecoveryParams) {
     console.log('Showing ResetPassword component due to recovery params')
-    return <ResetPassword />
+    return <ResetPassword onComplete={() => setIsPasswordReset(false)} />
   }
 
   // PRIORITY 2: Handle auth callback path
@@ -420,7 +429,7 @@ export default function App() {
 
   // PRIORITY 4: Handle reset password page
   if (path === '/reset-password') {
-    return <ResetPassword />
+    return <ResetPassword onComplete={() => setIsPasswordReset(false)} />
   }
 
   // PRIORITY 5: Main app logic
