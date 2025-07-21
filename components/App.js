@@ -1,190 +1,4 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import Dashboard from './Dashboard'
-import Auth from './Auth'
-
-// Reset Password Component
-function ResetPassword() {
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [session, setSession] = useState(null)
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!')
-      return
-    }
-
-    if (password.length < 6) {
-      alert('Password must be at least 6 characters long!')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      })
-
-      if (error) {
-        alert('Error updating password: ' + error.message)
-      } else {
-        alert('Password updated successfully!')
-        window.location.href = '/'
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error)
-      alert('An unexpected error occurred')
-    }
-
-    setLoading(false)
-  }
-
-  if (!session) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        background: '#f8f9fa'
-      }}>
-        <div style={{
-          background: 'white',
-          padding: '40px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          textAlign: 'center'
-        }}>
-          <h2>Invalid Reset Link</h2>
-          <p>This password reset link is invalid or has expired.</p>
-          <button
-            onClick={() => window.location.href = '/'}
-            style={{
-              background: '#dc2626',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            Back to Login
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      background: '#f8f9fa'
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '40px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>
-          Reset Your Password
-        </h2>
-        
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '5px',
-              fontWeight: 'bold'
-            }}>
-              New Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-              required
-            />
-          </div>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '5px',
-              fontWeight: 'bold'
-            }}>
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-              required
-            />
-          </div>
-          
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              background: '#dc2626',
-              color: 'white',
-              border: 'none',
-              padding: '12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold'
-            }}
-          >
-            {loading ? 'Updating...' : 'Update Password'}
-          </button>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-// Auth Callback Handler Component
+/ Auth Callback Handler Component
 function AuthCallback() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -210,7 +24,8 @@ function AuthCallback() {
             setError('Invalid or expired reset link')
           } else {
             console.log('Session set successfully:', data)
-            window.location.href = '/reset-password'
+            // Clean redirect - remove hash fragments
+            window.location.replace('/reset-password')
           }
         } else if (type === 'signup') {
           const { error } = await supabase.auth.verifyOtp({
@@ -222,7 +37,8 @@ function AuthCallback() {
             console.error('Error confirming email:', error)
             setError('Invalid confirmation link')
           } else {
-            window.location.href = '/'
+            // Clean redirect - remove hash fragments
+            window.location.replace('/')
           }
         } else {
           window.location.href = '/'
@@ -347,9 +163,14 @@ export default function App() {
     )
   }
 
-  // Simple routing based on URL path
+  // Simple routing based on URL path and hash
   const path = window.location.pathname
-  const hasAuthParams = window.location.hash.includes('access_token')
+  const hash = window.location.hash
+  const hasAuthParams = hash.includes('access_token') || hash.includes('type=recovery') || hash.includes('type=signup')
+
+  console.log('Current path:', path)
+  console.log('Current hash:', hash)
+  console.log('Has auth params:', hasAuthParams)
 
   // Handle auth callback URLs (password reset, email confirmation)
   if (hasAuthParams || path === '/auth/callback') {
