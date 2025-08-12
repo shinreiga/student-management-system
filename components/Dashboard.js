@@ -83,7 +83,12 @@ export default function Dashboard({ user }) {
   const fetchStudentDocuments = async (studentId) => {
     const { data, error } = await supabase
       .from('student_documents')
-      .select('*')
+      .select(`
+        *,
+        uploader:uploaded_by (
+          email
+        )
+      `)
       .eq('student_id', studentId)
       .order('uploaded_at', { ascending: false })
 
@@ -727,9 +732,17 @@ export default function Dashboard({ user }) {
                               <h4 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1f2937' }}>
                                 {doc.file_name}
                               </h4>
-                              <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
-                                {formatFileSize(doc.file_size)} • {new Date(doc.uploaded_at).toLocaleDateString()}
+                              <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#6b7280' }}>
+                                {formatFileSize(doc.file_size)} • {doc.file_type}
                               </p>
+                              <div style={{ fontSize: '11px', color: '#9ca3af', lineHeight: '1.4' }}>
+                                <p style={{ margin: '2px 0' }}>
+                                  <strong>Uploaded:</strong> {new Date(doc.uploaded_at).toLocaleDateString()} at {new Date(doc.uploaded_at).toLocaleTimeString()}
+                                </p>
+                                <p style={{ margin: '2px 0' }}>
+                                  <strong>By:</strong> {doc.uploader?.email || 'Unknown User'}
+                                </p>
+                              </div>
                             </div>
                           </div>
                           
