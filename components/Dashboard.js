@@ -12,8 +12,11 @@ export default function Dashboard({ user }) {
     first_name: '',
     last_name: '',
     email: '',
-    student_id: '',
-    grade_level: ''
+    bt_id: '',
+    grade_level: '',
+    contact_email: '',
+    contact_number: '',
+    emergency_contact_number: ''
   })
   const [newUser, setNewUser] = useState({
     email: '',
@@ -215,8 +218,11 @@ export default function Dashboard({ user }) {
           first_name: newStudent.first_name,
           last_name: newStudent.last_name,
           email: newStudent.email,
-          student_id: newStudent.student_id || null,
+          bt_id: newStudent.bt_id || null,
           grade_level: newStudent.grade_level || null,
+          contact_email: newStudent.contact_email || null,
+          contact_number: newStudent.contact_number || null,
+          emergency_contact_number: newStudent.emergency_contact_number || null,
           user_id: user.id
         }
       ])
@@ -228,8 +234,11 @@ export default function Dashboard({ user }) {
         first_name: '',
         last_name: '',
         email: '',
-        student_id: '',
-        grade_level: ''
+        bt_id: '',
+        grade_level: '',
+        contact_email: '',
+        contact_number: '',
+        emergency_contact_number: ''
       })
       fetchStudents()
     }
@@ -366,7 +375,7 @@ export default function Dashboard({ user }) {
         id: student.id,
         first_name: student.first_name,
         last_name: student.last_name,
-        student_id: student.student_id,
+        bt_id: student.bt_id,
         user_id: student.user_id
       }
     }
@@ -682,7 +691,7 @@ export default function Dashboard({ user }) {
                     fontWeight: 'bold',
                     color: '#374151'
                   }}>
-                    First Name
+                    First Name *
                   </label>
                   <input
                     type="text"
@@ -705,7 +714,7 @@ export default function Dashboard({ user }) {
                     fontWeight: 'bold',
                     color: '#374151'
                   }}>
-                    Last Name
+                    Last Name *
                   </label>
                   <input
                     type="text"
@@ -728,7 +737,7 @@ export default function Dashboard({ user }) {
                     fontWeight: 'bold',
                     color: '#374151'
                   }}>
-                    Email
+                    Email *
                   </label>
                   <input
                     type="email"
@@ -751,12 +760,12 @@ export default function Dashboard({ user }) {
                     fontWeight: 'bold',
                     color: '#374151'
                   }}>
-                    Student ID
+                    BT ID
                   </label>
                   <input
                     type="text"
-                    value={newStudent.student_id}
-                    onChange={(e) => setNewStudent({ ...newStudent, student_id: e.target.value })}
+                    value={newStudent.bt_id}
+                    onChange={(e) => setNewStudent({ ...newStudent, bt_id: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -764,6 +773,7 @@ export default function Dashboard({ user }) {
                       borderRadius: '6px',
                       fontSize: '14px'
                     }}
+                    placeholder="e.g., BT001"
                   />
                 </div>
                 <div>
@@ -787,13 +797,82 @@ export default function Dashboard({ user }) {
                     }}
                   >
                     <option value="">Select Belt Level</option>
-                    <option value="White Belt">White Belt</option>
-                    <option value="Yellow Belt">Yellow Belt</option>
-                    <option value="Green Belt">Green Belt</option>
-                    <option value="Blue Belt">Blue Belt</option>
-                    <option value="Red Belt">Red Belt</option>
-                    <option value="Black Belt">Black Belt</option>
+                    <option value="White">White</option>
+                    <option value="Red">Red</option>
+                    <option value="Yellow">Yellow</option>
+                    <option value="Green">Green</option>
+                    <option value="Blue">Blue</option>
+                    <option value="Black">Black</option>
                   </select>
+                </div>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px',
+                    fontWeight: 'bold',
+                    color: '#374151'
+                  }}>
+                    Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newStudent.contact_email}
+                    onChange={(e) => setNewStudent({ ...newStudent, contact_email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Alternative contact email"
+                  />
+                </div>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px',
+                    fontWeight: 'bold',
+                    color: '#374151'
+                  }}>
+                    Contact Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={newStudent.contact_number}
+                    onChange={(e) => setNewStudent({ ...newStudent, contact_number: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                    placeholder="e.g., +44 7123 456789"
+                  />
+                </div>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px',
+                    fontWeight: 'bold',
+                    color: '#374151'
+                  }}>
+                    Emergency Contact Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={newStudent.emergency_contact_number}
+                    onChange={(e) => setNewStudent({ ...newStudent, emergency_contact_number: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Emergency contact number"
+                  />
                 </div>
               </div>
               <button
@@ -1157,13 +1236,13 @@ export default function Dashboard({ user }) {
                     </div>
                     
                     <div>
-                      {displayData.student_id && (
+                      {displayData.bt_id && (
                         <p style={{ 
                           margin: '8px 0',
                           fontSize: '14px',
                           color: '#374151'
                         }}>
-                          🆔 ID: {displayData.student_id}
+                          🆔 BT ID: {displayData.bt_id}
                         </p>
                       )}
                       {isAdmin && student.grade_level && (
@@ -1173,7 +1252,35 @@ export default function Dashboard({ user }) {
                           color: '#059669',
                           fontWeight: 'bold'
                         }}>
-                          🥋 {student.grade_level}
+                          🥋 {student.grade_level} Belt
+                        </p>
+                      )}
+                      {isAdmin && student.contact_email && (
+                        <p style={{ 
+                          margin: '8px 0',
+                          fontSize: '14px',
+                          color: '#6b7280'
+                        }}>
+                          📧 Contact: {student.contact_email}
+                        </p>
+                      )}
+                      {isAdmin && student.contact_number && (
+                        <p style={{ 
+                          margin: '8px 0',
+                          fontSize: '14px',
+                          color: '#6b7280'
+                        }}>
+                          📞 Phone: {student.contact_number}
+                        </p>
+                      )}
+                      {isAdmin && student.emergency_contact_number && (
+                        <p style={{ 
+                          margin: '8px 0',
+                          fontSize: '14px',
+                          color: '#dc2626',
+                          fontWeight: 'bold'
+                        }}>
+                          🚨 Emergency: {student.emergency_contact_number}
                         </p>
                       )}
                       {isAdmin && (
@@ -1185,7 +1292,7 @@ export default function Dashboard({ user }) {
                           📅 Joined: {new Date(student.enrollment_date).toLocaleDateString()}
                         </p>
                       )}
-                      {!isAdmin && !displayData.student_id && (
+                      {!isAdmin && !displayData.bt_id && (
                         <p style={{ 
                           margin: '8px 0',
                           fontSize: '13px',
@@ -1265,11 +1372,13 @@ export default function Dashboard({ user }) {
                 <thead>
                   <tr style={{ background: '#f8f9fa' }}>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Name</th>
-                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Student ID</th>
+                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>BT ID</th>
                     {isAdmin && (
                       <>
                         <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Email</th>
                         <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Belt Level</th>
+                        <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Contact</th>
+                        <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Emergency</th>
                       </>
                     )}
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Actions</th>
@@ -1288,12 +1397,32 @@ export default function Dashboard({ user }) {
                           {displayData.first_name} {displayData.last_name}
                         </td>
                         <td style={{ padding: '15px' }}>
-                          {displayData.student_id || '—'}
+                          {displayData.bt_id || '—'}
                         </td>
                         {isAdmin && (
                           <>
                             <td style={{ padding: '15px' }}>{student.email}</td>
-                            <td style={{ padding: '15px' }}>{student.grade_level || '—'}</td>
+                            <td style={{ padding: '15px' }}>
+                              {student.grade_level ? `${student.grade_level} Belt` : '—'}
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <div style={{ fontSize: '12px' }}>
+                                {student.contact_email && (
+                                  <div>📧 {student.contact_email}</div>
+                                )}
+                                {student.contact_number && (
+                                  <div>📞 {student.contact_number}</div>
+                                )}
+                                {!student.contact_email && !student.contact_number && '—'}
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              {student.emergency_contact_number ? (
+                                <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '12px' }}>
+                                  🚨 {student.emergency_contact_number}
+                                </span>
+                              ) : '—'}
+                            </td>
                           </>
                         )}
                         <td style={{ padding: '15px' }}>
