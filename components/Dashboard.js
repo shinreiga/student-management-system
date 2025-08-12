@@ -496,17 +496,24 @@ export default function Dashboard({ user }) {
         {/* Documents Tab */}
         {activeTab === 'documents' && selectedStudent && (
           <div>
+            {/* Student Information Header */}
             <div style={{
               background: 'white',
               borderRadius: '8px',
-              padding: '20px',
+              padding: '30px',
               marginBottom: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              border: '3px solid #dc2626'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '24px', color: '#1f2937' }}>
-                  📁 Documents for {selectedStudent.first_name} {selectedStudent.last_name}
-                </h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
+                <div>
+                  <h2 style={{ margin: '0 0 10px 0', fontSize: '28px', color: '#1f2937', fontWeight: 'bold' }}>
+                    🥋 {selectedStudent.first_name} {selectedStudent.last_name}
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '16px', color: '#6b7280' }}>
+                    Member Profile & Documents
+                  </p>
+                </div>
                 <button
                   onClick={() => {
                     setSelectedStudent(null)
@@ -517,15 +524,134 @@ export default function Dashboard({ user }) {
                     background: '#6b7280',
                     color: 'white',
                     border: 'none',
-                    padding: '8px 16px',
+                    padding: '10px 20px',
                     borderRadius: '6px',
                     cursor: 'pointer',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    fontWeight: 'bold'
                   }}
                 >
                   ← Back to Members
                 </button>
               </div>
+
+              {/* Student Details Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '20px',
+                marginBottom: '25px'
+              }}>
+                {/* Basic Information */}
+                <div style={{
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  border: '2px solid #e5e7eb'
+                }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#374151', fontWeight: 'bold' }}>
+                    📋 Basic Information
+                  </h3>
+                  <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                    <p style={{ margin: '8px 0', color: '#374151' }}>
+                      <strong>Name:</strong> {selectedStudent.first_name} {selectedStudent.last_name}
+                    </p>
+                    <p style={{ margin: '8px 0', color: '#374151' }}>
+                      <strong>Email:</strong> {selectedStudent.email}
+                    </p>
+                    {selectedStudent.bt_id && (
+                      <p style={{ margin: '8px 0', color: '#374151' }}>
+                        <strong>🆔 BT ID:</strong> {selectedStudent.bt_id}
+                      </p>
+                    )}
+                    {selectedStudent.grade_level && (
+                      <p style={{ margin: '8px 0', color: '#059669', fontWeight: 'bold' }}>
+                        <strong>🥋 Belt Level:</strong> {selectedStudent.grade_level} Belt
+                      </p>
+                    )}
+                    {selectedStudent.enrollment_date && (
+                      <p style={{ margin: '8px 0', color: '#6b7280' }}>
+                        <strong>📅 Joined:</strong> {new Date(selectedStudent.enrollment_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact Information - Only show if admin or if user can see contact info */}
+                {(isAdmin || canEdit(selectedStudent.user_id)) && (selectedStudent.contact_email || selectedStudent.contact_number) && (
+                  <div style={{
+                    background: '#f0f9ff',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    border: '2px solid #0ea5e9'
+                  }}>
+                    <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#0c4a6e', fontWeight: 'bold' }}>
+                      📞 Contact Information
+                    </h3>
+                    <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                      {selectedStudent.contact_email && (
+                        <p style={{ margin: '8px 0', color: '#0c4a6e' }}>
+                          <strong>📧 Contact Email:</strong> {selectedStudent.contact_email}
+                        </p>
+                      )}
+                      {selectedStudent.contact_number && (
+                        <p style={{ margin: '8px 0', color: '#0c4a6e' }}>
+                          <strong>📱 Phone Number:</strong> {selectedStudent.contact_number}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Emergency Contact - Only show if admin or if user can see emergency info */}
+                {(isAdmin || canEdit(selectedStudent.user_id)) && selectedStudent.emergency_contact_number && (
+                  <div style={{
+                    background: '#fef2f2',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    border: '2px solid #dc2626'
+                  }}>
+                    <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#991b1b', fontWeight: 'bold' }}>
+                      🚨 Emergency Contact
+                    </h3>
+                    <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                      <p style={{ margin: '8px 0', color: '#991b1b', fontWeight: 'bold' }}>
+                        <strong>Emergency Number:</strong> {selectedStudent.emergency_contact_number}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Limited Access Notice for Non-Admins */}
+                {!isAdmin && !canEdit(selectedStudent.user_id) && (
+                  <div style={{
+                    background: '#fffbeb',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    border: '2px solid #f59e0b'
+                  }}>
+                    <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#92400e', fontWeight: 'bold' }}>
+                      ⚠️ Limited Access
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '14px', color: '#92400e' }}>
+                      Contact information is restricted. Please contact an instructor for full member details.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Documents Section */}
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '20px',
+              marginBottom: '20px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#1f2937' }}>
+                📁 Document Management
+              </h3>
 
               {/* Upload Section */}
               {(isAdmin || canEdit(selectedStudent.user_id)) && (
