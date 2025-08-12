@@ -396,6 +396,28 @@ export default function Dashboard({ user }) {
             0%, 50% { background-color: #fef2f2; }
             25%, 75% { background-color: #fee2e2; }
           }
+          
+          @media (max-width: 480px) {
+            .mobile-grid {
+              grid-template-columns: 1fr !important;
+            }
+            .mobile-single {
+              min-width: unset !important;
+              width: 100% !important;
+            }
+            .mobile-text {
+              font-size: 14px !important;
+            }
+            .mobile-padding {
+              padding: 10px !important;
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .tablet-grid {
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+            }
+          }
         `}
       </style>
       <div style={{
@@ -406,7 +428,7 @@ export default function Dashboard({ user }) {
         <header style={{
           background: 'white',
           borderBottom: '3px solid #dc2626',
-          padding: '20px',
+          padding: '15px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div style={{
@@ -414,12 +436,14 @@ export default function Dashboard({ user }) {
             margin: '0 auto',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '15px'
           }}>
-            <div>
+            <div style={{ minWidth: '200px' }}>
               <h1 style={{ 
                 margin: 0, 
-                fontSize: '28px', 
+                fontSize: '24px', 
                 color: '#1f2937',
                 fontWeight: 'bold'
               }}>
@@ -427,19 +451,21 @@ export default function Dashboard({ user }) {
               </h1>
               <p style={{ 
                 margin: '5px 0 0 0', 
-                color: '#6b7280' 
+                color: '#6b7280',
+                fontSize: '14px'
               }}>
                 {isAdmin ? 'Instructor Panel' : 'Member Portal'} | {students.length} members
               </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <span style={{
                 background: isAdmin ? '#dc2626' : '#374151',
                 color: 'white',
-                padding: '8px 16px',
+                padding: '6px 12px',
                 borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: 'bold'
+                fontSize: '11px',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap'
               }}>
                 {isAdmin ? 'INSTRUCTOR' : 'MEMBER'}
               </span>
@@ -449,11 +475,12 @@ export default function Dashboard({ user }) {
                   background: '#374151',
                   color: 'white',
                   border: 'none',
-                  padding: '12px 24px',
+                  padding: '10px 20px',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '14px',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  minHeight: '44px'
                 }}
               >
                 Sign Out
@@ -462,16 +489,17 @@ export default function Dashboard({ user }) {
           </div>
         </header>
 
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 20px' }}>
-          <div style={{ marginBottom: '30px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 15px' }}>
+          <div style={{ marginBottom: '20px' }}>
             <div style={{
               background: 'white',
               borderRadius: '8px',
-              padding: '8px',
+              padding: '6px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               display: 'flex',
-              gap: '8px',
-              flexWrap: 'wrap'
+              gap: '6px',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-start'
             }}>
               {[
                 { id: 'students', label: 'Members', icon: '👥' },
@@ -490,14 +518,16 @@ export default function Dashboard({ user }) {
                     background: activeTab === tab.id ? '#dc2626' : 'transparent',
                     color: activeTab === tab.id ? 'white' : '#374151',
                     border: 'none',
-                    padding: '12px 20px',
+                    padding: '10px 16px',
                     borderRadius: '6px',
                     cursor: 'pointer',
-                    fontSize: '14px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '6px',
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   <span>{tab.icon}</span>
@@ -512,14 +542,14 @@ export default function Dashboard({ user }) {
               <div style={{
                 background: 'white',
                 borderRadius: '8px',
-                padding: '30px',
+                padding: '20px 15px',
                 marginBottom: '20px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 border: '3px solid #dc2626'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexDirection: 'column', gap: '15px' }}>
                   <div>
-                    <h2 style={{ margin: '0 0 10px 0', fontSize: '28px', color: '#1f2937', fontWeight: 'bold' }}>
+                    <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', color: '#1f2937', fontWeight: 'bold' }}>
                       🥋 {selectedStudent.first_name} {selectedStudent.last_name}
                     </h2>
                     <p style={{ margin: 0, fontSize: '16px', color: '#6b7280' }}>
@@ -540,7 +570,8 @@ export default function Dashboard({ user }) {
                       borderRadius: '6px',
                       cursor: 'pointer',
                       fontSize: '14px',
-                      fontWeight: 'bold'
+                      fontWeight: 'bold',
+                      alignSelf: 'flex-start'
                     }}
                   >
                     ← Back to Members
@@ -549,14 +580,14 @@ export default function Dashboard({ user }) {
 
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '20px',
-                  marginBottom: '25px'
-                }}>
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '15px',
+                  marginBottom: '20px'
+                }} className="tablet-grid">
                   <div style={{
                     background: '#f8f9fa',
                     borderRadius: '8px',
-                    padding: '20px',
+                    padding: '15px',
                     border: '2px solid #e5e7eb'
                   }}>
                     <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#374151', fontWeight: 'bold' }}>
@@ -606,7 +637,7 @@ export default function Dashboard({ user }) {
                     <div style={{
                       background: '#f0f9ff',
                       borderRadius: '8px',
-                      padding: '20px',
+                      padding: '15px',
                       border: '2px solid #0ea5e9'
                     }}>
                       <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#0c4a6e', fontWeight: 'bold' }}>
@@ -631,7 +662,7 @@ export default function Dashboard({ user }) {
                     <div style={{
                       background: '#fef2f2',
                       borderRadius: '8px',
-                      padding: '20px',
+                      padding: '15px',
                       border: '2px solid #dc2626'
                     }}>
                       <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#991b1b', fontWeight: 'bold' }}>
@@ -650,11 +681,11 @@ export default function Dashboard({ user }) {
               <div style={{
                 background: 'white',
                 borderRadius: '8px',
-                padding: '20px',
+                padding: '15px',
                 marginBottom: '20px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#1f2937' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '20px', color: '#1f2937' }}>
                   📁 Document Management
                 </h3>
 
@@ -663,9 +694,9 @@ export default function Dashboard({ user }) {
                     background: '#f8f9fa',
                     border: '2px dashed #dc2626',
                     borderRadius: '8px',
-                    padding: '20px',
+                    padding: '15px',
                     textAlign: 'center',
-                    marginBottom: '20px'
+                    marginBottom: '15px'
                   }}>
                     <div style={{ fontSize: '48px', marginBottom: '10px' }}>📤</div>
                     <h3 style={{ margin: '0 0 10px 0', color: '#374151' }}>Upload Document</h3>
@@ -681,7 +712,9 @@ export default function Dashboard({ user }) {
                         padding: '10px',
                         border: '2px solid #e5e7eb',
                         borderRadius: '6px',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        width: '100%',
+                        maxWidth: '300px'
                       }}
                     />
                     {uploading && (
@@ -714,9 +747,9 @@ export default function Dashboard({ user }) {
                   <div style={{ padding: '20px' }}>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
                       gap: '15px'
-                    }}>
+                    }} className="tablet-grid">
                       {studentDocuments.map((doc) => (
                         <div key={doc.id} style={{
                           border: '2px solid #e5e7eb',
@@ -802,8 +835,8 @@ export default function Dashboard({ user }) {
             <div style={{
               background: 'white',
               borderRadius: '8px',
-              padding: '30px',
-              marginBottom: '30px',
+              padding: '20px 15px',
+              marginBottom: '20px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ 
@@ -816,10 +849,10 @@ export default function Dashboard({ user }) {
               <form onSubmit={createStudent}>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                  gap: '20px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '15px',
                   marginBottom: '20px'
-                }}>
+                }} className="tablet-grid mobile-grid">
                   <div>
                     <label style={{ 
                       display: 'block', 
@@ -1079,8 +1112,8 @@ export default function Dashboard({ user }) {
                     👤 System Users
                   </h3>
                 </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                     <thead>
                       <tr style={{ background: '#f8f9fa' }}>
                         <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Email</th>
@@ -1191,8 +1224,8 @@ export default function Dashboard({ user }) {
             <div style={{
               background: 'white',
               borderRadius: '8px',
-              padding: '30px',
-              marginBottom: '30px',
+              padding: '20px 15px',
+              marginBottom: '20px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ 
@@ -1205,10 +1238,10 @@ export default function Dashboard({ user }) {
               <form onSubmit={createUser}>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                  gap: '20px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '15px',
                   marginBottom: '20px'
-                }}>
+                }} className="tablet-grid mobile-grid">
                   <div>
                     <label style={{ 
                       display: 'block', 
@@ -1313,9 +1346,9 @@ export default function Dashboard({ user }) {
               
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
-                gap: '20px'
-              }}>
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: '15px'
+              }} className="tablet-grid">
                 {students.map((student, index) => {
                   const displayData = getStudentDisplayData(student)
                   const canEditThis = canEdit(student.user_id)
@@ -1324,7 +1357,7 @@ export default function Dashboard({ user }) {
                     <div key={student.id} style={{
                       background: 'white',
                       borderRadius: '8px',
-                      padding: '25px',
+                      padding: '20px 15px',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                       border: `3px solid ${index % 2 === 0 ? '#dc2626' : '#374151'}`
                     }}>
@@ -1332,7 +1365,9 @@ export default function Dashboard({ user }) {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'start',
-                        marginBottom: '20px'
+                        marginBottom: '15px',
+                        flexWrap: 'wrap',
+                        gap: '10px'
                       }}>
                         <div style={{ flex: 1 }}>
                           <h3 style={{
@@ -1538,7 +1573,7 @@ export default function Dashboard({ user }) {
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
-                            padding: '10px 16px',
+                            padding: '12px 16px',
                             cursor: 'pointer',
                             fontSize: '14px',
                             width: '100%',
@@ -1546,7 +1581,8 @@ export default function Dashboard({ user }) {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '8px',
-                            fontWeight: 'bold'
+                            fontWeight: 'bold',
+                            minHeight: '44px'
                           }}
                         >
                           📁 View Documents & Full Profile
@@ -1592,8 +1628,8 @@ export default function Dashboard({ user }) {
                   📋 Members List ({students.length})
                 </h3>
               </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                   <thead>
                     <tr style={{ background: '#f8f9fa' }}>
                       <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Name</th>
