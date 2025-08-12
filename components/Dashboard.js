@@ -368,17 +368,8 @@ export default function Dashboard({ user }) {
   const canEdit = (studentUserId) => isAdmin || studentUserId === user.id
 
   const getStudentDisplayData = (student) => {
-    if (isAdmin) {
-      return student
-    } else {
-      return {
-        id: student.id,
-        first_name: student.first_name,
-        last_name: student.last_name,
-        bt_id: student.bt_id,
-        user_id: student.user_id
-      }
-    }
+    // Return all student data for everyone (no restrictions)
+    return student
   }
 
   return (
@@ -1280,21 +1271,11 @@ export default function Dashboard({ user }) {
               color: '#1f2937'
             }}>
               Club Members ({students.length})
-              {!isAdmin && (
-                <span style={{ 
-                  fontSize: '14px', 
-                  color: '#6b7280',
-                  fontWeight: 'normal',
-                  marginLeft: '10px'
-                }}>
-                  - Limited View
-                </span>
-              )}
             </h2>
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
               gap: '20px'
             }}>
               {students.map((student, index) => {
@@ -1305,7 +1286,7 @@ export default function Dashboard({ user }) {
                   <div key={student.id} style={{
                     background: 'white',
                     borderRadius: '8px',
-                    padding: '20px',
+                    padding: '25px',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                     border: `3px solid ${index % 2 === 0 ? '#dc2626' : '#374151'}`
                   }}>
@@ -1313,35 +1294,24 @@ export default function Dashboard({ user }) {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'start',
-                      marginBottom: '15px'
+                      marginBottom: '20px'
                     }}>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <h3 style={{
-                          margin: '0 0 8px 0',
-                          fontSize: '18px',
+                          margin: '0 0 10px 0',
+                          fontSize: '20px',
                           color: '#1f2937',
                           fontWeight: 'bold'
                         }}>
                           {displayData.first_name} {displayData.last_name}
                         </h3>
-                        {isAdmin && (
-                          <p style={{ 
-                            margin: '0 0 8px 0', 
-                            color: '#6b7280',
-                            fontSize: '14px'
-                          }}>
-                            📧 {student.email}
-                          </p>
-                        )}
-                        {!isAdmin && (
-                          <p style={{ 
-                            margin: '0 0 8px 0', 
-                            color: '#6b7280',
-                            fontSize: '12px'
-                          }}>
-                            Contact instructor for details
-                          </p>
-                        )}
+                        <p style={{ 
+                          margin: '0 0 10px 0', 
+                          color: '#6b7280',
+                          fontSize: '14px'
+                        }}>
+                          📧 {student.email}
+                        </p>
                       </div>
                       {canEditThis && (
                         <button
@@ -1361,77 +1331,125 @@ export default function Dashboard({ user }) {
                       )}
                     </div>
                     
-                    <div>
+                    {/* Basic Information Section */}
+                    <div style={{ marginBottom: '15px' }}>
                       {displayData.bt_id && (
                         <p style={{ 
-                          margin: '8px 0',
+                          margin: '6px 0',
                           fontSize: '14px',
                           color: '#374151'
                         }}>
-                          🆔 BT ID: {displayData.bt_id}
+                          🆔 <strong>BT ID:</strong> {displayData.bt_id}
                         </p>
                       )}
-                      {isAdmin && student.grade_level && (
+                      {student.grade_level && (
                         <p style={{ 
-                          margin: '8px 0',
+                          margin: '6px 0',
                           fontSize: '14px',
                           color: '#059669',
                           fontWeight: 'bold'
                         }}>
-                          🥋 {student.grade_level} Belt
+                          🥋 <strong>Belt Level:</strong> {student.grade_level} Belt
                         </p>
                       )}
-                      {isAdmin && student.contact_email && (
-                        <p style={{ 
-                          margin: '8px 0',
-                          fontSize: '14px',
-                          color: '#6b7280'
-                        }}>
-                          📧 Contact: {student.contact_email}
-                        </p>
-                      )}
-                      {isAdmin && student.contact_number && (
-                        <p style={{ 
-                          margin: '8px 0',
-                          fontSize: '14px',
-                          color: '#6b7280'
-                        }}>
-                          📞 Phone: {student.contact_number}
-                        </p>
-                      )}
-                      {isAdmin && student.emergency_contact_number && (
-                        <p style={{ 
-                          margin: '8px 0',
-                          fontSize: '14px',
-                          color: '#dc2626',
-                          fontWeight: 'bold'
-                        }}>
-                          🚨 Emergency: {student.emergency_contact_number}
-                        </p>
-                      )}
-                      {isAdmin && (
-                        <p style={{ 
-                          margin: '8px 0',
-                          fontSize: '13px',
-                          color: '#6b7280'
-                        }}>
-                          📅 Joined: {new Date(student.enrollment_date).toLocaleDateString()}
-                        </p>
-                      )}
-                      {!isAdmin && !displayData.bt_id && (
-                        <p style={{ 
-                          margin: '8px 0',
-                          fontSize: '13px',
-                          color: '#9ca3af',
-                          fontStyle: 'italic'
-                        }}>
-                          Limited information available
-                        </p>
-                      )}
+                      <p style={{ 
+                        margin: '6px 0',
+                        fontSize: '13px',
+                        color: '#6b7280'
+                      }}>
+                        📅 <strong>Joined:</strong> {new Date(student.enrollment_date).toLocaleDateString()}
+                      </p>
                     </div>
 
+                    {/* Contact Information Section */}
+                    {(student.contact_email || student.contact_number) && (
+                      <div style={{ 
+                        marginBottom: '15px',
+                        padding: '12px',
+                        background: '#f0f9ff',
+                        borderRadius: '6px',
+                        border: '1px solid #0ea5e9'
+                      }}>
+                        <h4 style={{ 
+                          margin: '0 0 8px 0',
+                          fontSize: '14px',
+                          color: '#0c4a6e',
+                          fontWeight: 'bold'
+                        }}>
+                          📞 Contact Information
+                        </h4>
+                        {student.contact_email && (
+                          <p style={{ 
+                            margin: '4px 0',
+                            fontSize: '13px',
+                            color: '#0c4a6e'
+                          }}>
+                            📧 <strong>Contact Email:</strong> {student.contact_email}
+                          </p>
+                        )}
+                        {student.contact_number && (
+                          <p style={{ 
+                            margin: '4px 0',
+                            fontSize: '13px',
+                            color: '#0c4a6e'
+                          }}>
+                            📱 <strong>Phone:</strong> {student.contact_number}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Emergency Contact Section */}
+                    {student.emergency_contact_number && (
+                      <div style={{ 
+                        marginBottom: '15px',
+                        padding: '12px',
+                        background: '#fef2f2',
+                        borderRadius: '6px',
+                        border: '1px solid #dc2626'
+                      }}>
+                        <h4 style={{ 
+                          margin: '0 0 8px 0',
+                          fontSize: '14px',
+                          color: '#991b1b',
+                          fontWeight: 'bold'
+                        }}>
+                          🚨 Emergency Contact
+                        </h4>
+                        <p style={{ 
+                          margin: '4px 0',
+                          fontSize: '13px',
+                          color: '#991b1b',
+                          fontWeight: 'bold'
+                        }}>
+                          📞 {student.emergency_contact_number}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* No Additional Info Message */}
+                    {!student.bt_id && !student.grade_level && !student.contact_email && 
+                     !student.contact_number && !student.emergency_contact_number && (
+                      <div style={{ 
+                        marginBottom: '15px',
+                        padding: '10px',
+                        background: '#f8f9fa',
+                        borderRadius: '6px',
+                        textAlign: 'center'
+                      }}>
+                        <p style={{ 
+                          margin: 0,
+                          fontSize: '13px',
+                          color: '#6b7280',
+                          fontStyle: 'italic'
+                        }}>
+                          Additional information to be added
+                        </p>
+                      </div>
+                    )}
+
                     {/* Documents Button */}
-                    <div style={{ marginTop: '15px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
+                    <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
                       <button
                         onClick={() => openStudentDetails(student)}
                         style={{
@@ -1439,17 +1457,18 @@ export default function Dashboard({ user }) {
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
-                          padding: '8px 16px',
+                          padding: '10px 16px',
                           cursor: 'pointer',
                           fontSize: '14px',
                           width: '100%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '8px'
+                          gap: '8px',
+                          fontWeight: 'bold'
                         }}
                       >
-                        📁 View Documents
+                        📁 View Documents & Full Profile
                       </button>
                     </div>
                   </div>
@@ -1499,14 +1518,10 @@ export default function Dashboard({ user }) {
                   <tr style={{ background: '#f8f9fa' }}>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Name</th>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>BT ID</th>
-                    {isAdmin && (
-                      <>
-                        <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Email</th>
-                        <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Belt Level</th>
-                        <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Contact</th>
-                        <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Emergency</th>
-                      </>
-                    )}
+                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Email</th>
+                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Belt Level</th>
+                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Contact Info</th>
+                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Emergency</th>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Actions</th>
                   </tr>
                 </thead>
@@ -1525,32 +1540,28 @@ export default function Dashboard({ user }) {
                         <td style={{ padding: '15px' }}>
                           {displayData.bt_id || '—'}
                         </td>
-                        {isAdmin && (
-                          <>
-                            <td style={{ padding: '15px' }}>{student.email}</td>
-                            <td style={{ padding: '15px' }}>
-                              {student.grade_level ? `${student.grade_level} Belt` : '—'}
-                            </td>
-                            <td style={{ padding: '15px' }}>
-                              <div style={{ fontSize: '12px' }}>
-                                {student.contact_email && (
-                                  <div>📧 {student.contact_email}</div>
-                                )}
-                                {student.contact_number && (
-                                  <div>📞 {student.contact_number}</div>
-                                )}
-                                {!student.contact_email && !student.contact_number && '—'}
-                              </div>
-                            </td>
-                            <td style={{ padding: '15px' }}>
-                              {student.emergency_contact_number ? (
-                                <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '12px' }}>
-                                  🚨 {student.emergency_contact_number}
-                                </span>
-                              ) : '—'}
-                            </td>
-                          </>
-                        )}
+                        <td style={{ padding: '15px' }}>{student.email}</td>
+                        <td style={{ padding: '15px' }}>
+                          {student.grade_level ? `${student.grade_level} Belt` : '—'}
+                        </td>
+                        <td style={{ padding: '15px' }}>
+                          <div style={{ fontSize: '12px' }}>
+                            {student.contact_email && (
+                              <div>📧 {student.contact_email}</div>
+                            )}
+                            {student.contact_number && (
+                              <div>📞 {student.contact_number}</div>
+                            )}
+                            {!student.contact_email && !student.contact_number && '—'}
+                          </div>
+                        </td>
+                        <td style={{ padding: '15px' }}>
+                          {student.emergency_contact_number ? (
+                            <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '12px' }}>
+                              🚨 {student.emergency_contact_number}
+                            </span>
+                          ) : '—'}
+                        </td>
                         <td style={{ padding: '15px' }}>
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <button
