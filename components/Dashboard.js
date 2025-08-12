@@ -16,7 +16,8 @@ export default function Dashboard({ user }) {
     grade_level: '',
     contact_email: '',
     contact_number: '',
-    emergency_contact_number: ''
+    emergency_contact_number: '',
+    insurance_expiry: ''
   })
   const [newUser, setNewUser] = useState({
     email: '',
@@ -223,6 +224,7 @@ export default function Dashboard({ user }) {
           contact_email: newStudent.contact_email || null,
           contact_number: newStudent.contact_number || null,
           emergency_contact_number: newStudent.emergency_contact_number || null,
+          insurance_expiry: newStudent.insurance_expiry || null,
           user_id: user.id
         }
       ])
@@ -344,7 +346,21 @@ export default function Dashboard({ user }) {
     }
   }
 
-  const signOut = async () => {
+  const isInsuranceExpired = (expiryDate) => {
+    if (!expiryDate) return false
+    const today = new Date()
+    const expiry = new Date(expiryDate)
+    return expiry < today
+  }
+
+  const isInsuranceExpiringSoon = (expiryDate) => {
+    if (!expiryDate) return false
+    const today = new Date()
+    const expiry = new Date(expiryDate)
+    const thirtyDaysFromNow = new Date()
+    thirtyDaysFromNow.setDate(today.getDate() + 30)
+    return expiry >= today && expiry <= thirtyDaysFromNow
+  }
     try {
       const { error } = await supabase.auth.signOut()
       if (error) {
@@ -358,7 +374,7 @@ export default function Dashboard({ user }) {
     }
   }
 
-  const openStudentDetails = (student) => {
+  const signOut = async () => {
     setSelectedStudent(student)
     fetchStudentDocuments(student.id)
     setActiveTab('documents')
@@ -378,6 +394,14 @@ export default function Dashboard({ user }) {
       background: '#f8f9fa',
       fontFamily: 'Arial, sans-serif'
     }}>
+      <style>
+        {`
+          @keyframes flash {
+            0%, 50% { background-color: #fef2f2; }
+            25%, 75% { background-color: #fee2e2; }
+          }
+        `}
+      </style>
       {/* Header */}
       <header style={{
         background: 'white',
@@ -568,8 +592,8 @@ export default function Dashboard({ user }) {
                   </div>
                 </div>
 
-                {/* Contact Information - Only show if admin or if user can see contact info */}
-                {(isAdmin || canEdit(selectedStudent.user_id)) && (selectedStudent.contact_email || selectedStudent.contact_number) && (
+                {/* Contact Information - Show for everyone */}
+                {(selectedStudent.contact_email || selectedStudent.contact_number) && (
                   <div style={{
                     background: '#f0f9ff',
                     borderRadius: '8px',
@@ -594,8 +618,8 @@ export default function Dashboard({ user }) {
                   </div>
                 )}
 
-                {/* Emergency Contact - Only show if admin or if user can see emergency info */}
-                {(isAdmin || canEdit(selectedStudent.user_id)) && selectedStudent.emergency_contact_number && (
+                {/* Emergency Contact - Show for everyone */}
+                {selectedStudent.emergency_contact_number && (
                   <div style={{
                     background: '#fef2f2',
                     borderRadius: '8px',
@@ -610,23 +634,6 @@ export default function Dashboard({ user }) {
                         <strong>Emergency Number:</strong> {selectedStudent.emergency_contact_number}
                       </p>
                     </div>
-                  </div>
-                )}
-
-                {/* Limited Access Notice for Non-Admins */}
-                {!isAdmin && !canEdit(selectedStudent.user_id) && (
-                  <div style={{
-                    background: '#fffbeb',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    border: '2px solid #f59e0b'
-                  }}>
-                    <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#92400e', fontWeight: 'bold' }}>
-                      ⚠️ Limited Access
-                    </h3>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#92400e' }}>
-                      Contact information is restricted. Please contact an instructor for full member details.
-                    </p>
                   </div>
                 )}
               </div>
@@ -989,6 +996,28 @@ export default function Dashboard({ user }) {
                       fontSize: '14px'
                     }}
                     placeholder="Emergency contact number"
+                  />
+                </div>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '5px',
+                    fontWeight: 'bold',
+                    color: '#374151'
+                  }}>
+                    Insurance Expiry Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newStudent.insurance_expiry}
+                    onChange={(e) => setNewStudent({ ...newStudent, insurance_expiry: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
                   />
                 </div>
               </div>
@@ -1361,6 +1390,55 @@ export default function Dashboard({ user }) {
                       </p>
                     </div>
 
+                    {/* Insurance Status Section */}
+                    {student.insurance_expiry && (
+                      <div style={{ 
+                        marginBottom: '15px',
+                        padding: '12px',
+                        background: isInsuranceExpired(student.insurance_expiry) 
+                          ? '#fef2f2' 
+                          : isInsuranceExpiringSoon(student.insurance_expiry) 
+                            ? '#fffbeb' 
+                            : '#f0fdf4',
+                        borderRadius: '6px',
+                        border: isInsuranceExpired(student.insurance_expiry) 
+                          ? '2px solid #dc2626' 
+                          : isInsuranceExpiringSoon(student.insurance_expiry) 
+                            ? '2px solid #f59e0b' 
+                            : '2px solid #10b981',
+                        animation: isInsuranceExpired(student.insurance_expiry) 
+                          ? 'flash 1s infinite' 
+                          : 'none'
+                      }}>
+                        <h4 style={{ 
+                          margin: '0 0 8px 0',
+                          fontSize: '14px',
+                          color: isInsuranceExpired(student.insurance_expiry) 
+                            ? '#991b1b' 
+                            : isInsuranceExpiringSoon(student.insurance_expiry) 
+                              ? '#92400e' 
+                              : '#065f46',
+                          fontWeight: 'bold'
+                        }}>
+                          🛡️ Insurance Status
+                        </h4>
+                        <p style={{ 
+                          margin: '4px 0',
+                          fontSize: '13px',
+                          color: isInsuranceExpired(student.insurance_expiry) 
+                            ? '#991b1b' 
+                            : isInsuranceExpiringSoon(student.insurance_expiry) 
+                              ? '#92400e' 
+                              : '#065f46',
+                          fontWeight: isInsuranceExpired(student.insurance_expiry) ? 'bold' : 'normal'
+                        }}>
+                          <strong>Expires:</strong> {new Date(student.insurance_expiry).toLocaleDateString()}
+                          {isInsuranceExpired(student.insurance_expiry) && ' ⚠️ EXPIRED'}
+                          {isInsuranceExpiringSoon(student.insurance_expiry) && ' ⚠️ EXPIRES SOON'}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Contact Information Section */}
                     {(student.contact_email || student.contact_number) && (
                       <div style={{ 
@@ -1429,7 +1507,7 @@ export default function Dashboard({ user }) {
 
                     {/* No Additional Info Message */}
                     {!student.bt_id && !student.grade_level && !student.contact_email && 
-                     !student.contact_number && !student.emergency_contact_number && (
+                     !student.contact_number && !student.emergency_contact_number && !student.insurance_expiry && (
                       <div style={{ 
                         marginBottom: '15px',
                         padding: '10px',
@@ -1520,6 +1598,7 @@ export default function Dashboard({ user }) {
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>BT ID</th>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Email</th>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Belt Level</th>
+                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Insurance</th>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Contact Info</th>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Emergency</th>
                     <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Actions</th>
@@ -1543,6 +1622,36 @@ export default function Dashboard({ user }) {
                         <td style={{ padding: '15px' }}>{student.email}</td>
                         <td style={{ padding: '15px' }}>
                           {student.grade_level ? `${student.grade_level} Belt` : '—'}
+                        </td>
+                        <td style={{ 
+                          padding: '15px',
+                          background: student.insurance_expiry && isInsuranceExpired(student.insurance_expiry) 
+                            ? '#fef2f2' 
+                            : 'transparent',
+                          animation: student.insurance_expiry && isInsuranceExpired(student.insurance_expiry) 
+                            ? 'flash 1s infinite' 
+                            : 'none'
+                        }}>
+                          {student.insurance_expiry ? (
+                            <div style={{ fontSize: '12px' }}>
+                              <div style={{ 
+                                color: isInsuranceExpired(student.insurance_expiry) 
+                                  ? '#991b1b' 
+                                  : isInsuranceExpiringSoon(student.insurance_expiry) 
+                                    ? '#92400e' 
+                                    : '#065f46',
+                                fontWeight: isInsuranceExpired(student.insurance_expiry) ? 'bold' : 'normal'
+                              }}>
+                                🛡️ {new Date(student.insurance_expiry).toLocaleDateString()}
+                              </div>
+                              {isInsuranceExpired(student.insurance_expiry) && (
+                                <div style={{ color: '#991b1b', fontWeight: 'bold' }}>⚠️ EXPIRED</div>
+                              )}
+                              {isInsuranceExpiringSoon(student.insurance_expiry) && (
+                                <div style={{ color: '#92400e', fontWeight: 'bold' }}>⚠️ EXPIRES SOON</div>
+                              )}
+                            </div>
+                          ) : '—'}
                         </td>
                         <td style={{ padding: '15px' }}>
                           <div style={{ fontSize: '12px' }}>
