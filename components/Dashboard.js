@@ -389,11 +389,7 @@ export default function Dashboard({ user }) {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f8f9fa',
-      fontFamily: 'Arial, sans-serif'
-    }}>
+    <>
       <style>
         {`
           @keyframes flash {
@@ -402,6 +398,11 @@ export default function Dashboard({ user }) {
           }
         `}
       </style>
+      <div style={{
+        minHeight: '100vh',
+        background: '#f8f9fa',
+        fontFamily: 'Arial, sans-serif'
+      }}>
       {/* Header */}
       <header style={{
         background: 'white',
@@ -1715,5 +1716,6 @@ export default function Dashboard({ user }) {
         )}
       </div>
     </div>
+    </>
   )
 }
