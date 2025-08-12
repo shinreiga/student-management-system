@@ -502,7 +502,6 @@ export default function Dashboard({ user }) {
             </div>
           </div>
 
-          {/* Documents Tab */}
           {activeTab === 'documents' && selectedStudent && (
             <div>
               <div style={{
@@ -514,6 +513,323 @@ export default function Dashboard({ user }) {
                 border: '3px solid #dc2626'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
+                  <div>
+                    <h2 style={{ margin: '0 0 10px 0', fontSize: '28px', color: '#1f2937', fontWeight: 'bold' }}>
+                      🥋 {selectedStudent.first_name} {selectedStudent.last_name}
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '16px', color: '#6b7280' }}>
+                      Member Profile & Documents
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedStudent(null)
+                      setStudentDocuments([])
+                      setActiveTab('students')
+                    }}
+                    style={{
+                      background: '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    ← Back to Members
+                  </button>
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '20px',
+                  marginBottom: '25px'
+                }}>
+                  <div style={{
+                    background: '#f8f9fa',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    border: '2px solid #e5e7eb'
+                  }}>
+                    <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#374151', fontWeight: 'bold' }}>
+                      📋 Basic Information
+                    </h3>
+                    <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                      <p style={{ margin: '8px 0', color: '#374151' }}>
+                        <strong>Name:</strong> {selectedStudent.first_name} {selectedStudent.last_name}
+                      </p>
+                      <p style={{ margin: '8px 0', color: '#374151' }}>
+                        <strong>Email:</strong> {selectedStudent.email}
+                      </p>
+                      {selectedStudent.bt_id && (
+                        <p style={{ margin: '8px 0', color: '#374151' }}>
+                          <strong>🆔 BT ID:</strong> {selectedStudent.bt_id}
+                        </p>
+                      )}
+                      {selectedStudent.grade_level && (
+                        <p style={{ margin: '8px 0', color: '#059669', fontWeight: 'bold' }}>
+                          <strong>🥋 Belt Level:</strong> {selectedStudent.grade_level} Belt
+                        </p>
+                      )}
+                      {selectedStudent.enrollment_date && (
+                        <p style={{ margin: '8px 0', color: '#6b7280' }}>
+                          <strong>📅 Joined:</strong> {new Date(selectedStudent.enrollment_date).toLocaleDateString()}
+                        </p>
+                      )}
+                      {selectedStudent.insurance_expiry && (
+                        <p style={{ 
+                          margin: '8px 0', 
+                          color: isInsuranceExpired(selectedStudent.insurance_expiry) 
+                            ? '#991b1b' 
+                            : isInsuranceExpiringSoon(selectedStudent.insurance_expiry) 
+                              ? '#92400e' 
+                              : '#065f46',
+                          fontWeight: isInsuranceExpired(selectedStudent.insurance_expiry) ? 'bold' : 'normal'
+                        }}>
+                          <strong>🛡️ Insurance Expires:</strong> {new Date(selectedStudent.insurance_expiry).toLocaleDateString()}
+                          {isInsuranceExpired(selectedStudent.insurance_expiry) && ' ⚠️ EXPIRED'}
+                          {isInsuranceExpiringSoon(selectedStudent.insurance_expiry) && ' ⚠️ EXPIRES SOON'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {(selectedStudent.contact_email || selectedStudent.contact_number) && (
+                    <div style={{
+                      background: '#f0f9ff',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      border: '2px solid #0ea5e9'
+                    }}>
+                      <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#0c4a6e', fontWeight: 'bold' }}>
+                        📞 Contact Information
+                      </h3>
+                      <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                        {selectedStudent.contact_email && (
+                          <p style={{ margin: '8px 0', color: '#0c4a6e' }}>
+                            <strong>📧 Contact Email:</strong> {selectedStudent.contact_email}
+                          </p>
+                        )}
+                        {selectedStudent.contact_number && (
+                          <p style={{ margin: '8px 0', color: '#0c4a6e' }}>
+                            <strong>📱 Phone Number:</strong> {selectedStudent.contact_number}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedStudent.emergency_contact_number && (
+                    <div style={{
+                      background: '#fef2f2',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      border: '2px solid #dc2626'
+                    }}>
+                      <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#991b1b', fontWeight: 'bold' }}>
+                        🚨 Emergency Contact
+                      </h3>
+                      <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                        <p style={{ margin: '8px 0', color: '#991b1b', fontWeight: 'bold' }}>
+                          <strong>Emergency Number:</strong> {selectedStudent.emergency_contact_number}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{
+                background: 'white',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '20px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#1f2937' }}>
+                  📁 Document Management
+                </h3>
+
+                {(isAdmin || canEdit(selectedStudent.user_id)) && (
+                  <div style={{
+                    background: '#f8f9fa',
+                    border: '2px dashed #dc2626',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    marginBottom: '20px'
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '10px' }}>📤</div>
+                    <h3 style={{ margin: '0 0 10px 0', color: '#374151' }}>Upload Document</h3>
+                    <p style={{ margin: '0 0 15px 0', color: '#6b7280', fontSize: '14px' }}>
+                      Supported formats: PDF, Images, Word, Excel (Max 10MB)
+                    </p>
+                    <input
+                      type="file"
+                      onChange={(e) => handleFileUpload(e, selectedStudent.id)}
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                      disabled={uploading}
+                      style={{
+                        padding: '10px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                    {uploading && (
+                      <p style={{ margin: '10px 0 0 0', color: '#dc2626', fontWeight: 'bold' }}>
+                        Uploading...
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                background: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  background: '#374151',
+                  color: 'white',
+                  padding: '20px',
+                  textAlign: 'center'
+                }}>
+                  <h3 style={{ margin: 0, fontSize: '20px' }}>
+                    📄 Documents ({studentDocuments.length})
+                  </h3>
+                </div>
+                
+                {studentDocuments.length > 0 ? (
+                  <div style={{ padding: '20px' }}>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                      gap: '15px'
+                    }}>
+                      {studentDocuments.map((doc) => (
+                        <div key={doc.id} style={{
+                          border: '2px solid #e5e7eb',
+                          borderRadius: '8px',
+                          padding: '15px',
+                          background: '#f8f9fa'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontSize: '24px', marginRight: '10px' }}>
+                              {getDocumentIcon(doc.file_type)}
+                            </span>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1f2937' }}>
+                                {doc.file_name}
+                              </h4>
+                              <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
+                                {formatFileSize(doc.file_size)} • {new Date(doc.uploaded_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                            <button
+                              onClick={() => downloadDocument(doc.file_path, doc.file_name)}
+                              style={{
+                                background: '#059669',
+                                color: 'white',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                flex: 1
+                              }}
+                            >
+                              Download
+                            </button>
+                            {(isAdmin || canEdit(selectedStudent.user_id)) && (
+                              <button
+                                onClick={() => deleteDocument(doc.id, doc.file_path)}
+                                style={{
+                                  background: '#dc2626',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '6px 12px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    color: '#6b7280'
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '15px' }}>📄</div>
+                    <h3 style={{ color: '#374151' }}>No documents uploaded yet</h3>
+                    <p>Upload the first document using the upload area above.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'add' && isAdmin && (
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '30px',
+              marginBottom: '30px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ 
+                margin: '0 0 20px 0',
+                fontSize: '24px',
+                color: '#1f2937'
+              }}>
+                Add New Club Member
+              </h2>
+              <form onSubmit={createStudent}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '20px',
+                  marginBottom: '20px'
+                }}>
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '5px',
+                      fontWeight: 'bold',
+                      color: '#374151'
+                    }}>
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={newStudent.first_name}
+                      onChange={(e) => setNewStudent({ ...newStudent, first_name: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                      required
+                    />
+                  </div>
                   <div>
                     <label style={{ 
                       display: 'block', 
@@ -724,7 +1040,6 @@ export default function Dashboard({ user }) {
             </div>
           )}
 
-          {/* User Management Tab */}
           {activeTab === 'users' && isAdmin && (
             <div>
               <h2 style={{ 
@@ -859,7 +1174,6 @@ export default function Dashboard({ user }) {
             </div>
           )}
 
-          {/* Add User Form */}
           {activeTab === 'adduser' && isAdmin && (
             <div style={{
               background: 'white',
@@ -974,7 +1288,6 @@ export default function Dashboard({ user }) {
             </div>
           )}
 
-          {/* Members Grid View */}
           {activeTab === 'students' && (
             <div>
               <h2 style={{ 
@@ -1249,7 +1562,6 @@ export default function Dashboard({ user }) {
             </div>
           )}
 
-          {/* Table View */}
           {activeTab === 'table' && (
             <div style={{
               background: 'white',
@@ -1395,320 +1707,3 @@ export default function Dashboard({ user }) {
     </>
   )
 }
-                    <h2 style={{ margin: '0 0 10px 0', fontSize: '28px', color: '#1f2937', fontWeight: 'bold' }}>
-                      🥋 {selectedStudent.first_name} {selectedStudent.last_name}
-                    </h2>
-                    <p style={{ margin: 0, fontSize: '16px', color: '#6b7280' }}>
-                      Member Profile & Documents
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedStudent(null)
-                      setStudentDocuments([])
-                      setActiveTab('students')
-                    }}
-                    style={{
-                      background: '#6b7280',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    ← Back to Members
-                  </button>
-                </div>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '20px',
-                  marginBottom: '25px'
-                }}>
-                  <div style={{
-                    background: '#f8f9fa',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    border: '2px solid #e5e7eb'
-                  }}>
-                    <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#374151', fontWeight: 'bold' }}>
-                      📋 Basic Information
-                    </h3>
-                    <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                      <p style={{ margin: '8px 0', color: '#374151' }}>
-                        <strong>Name:</strong> {selectedStudent.first_name} {selectedStudent.last_name}
-                      </p>
-                      <p style={{ margin: '8px 0', color: '#374151' }}>
-                        <strong>Email:</strong> {selectedStudent.email}
-                      </p>
-                      {selectedStudent.bt_id && (
-                        <p style={{ margin: '8px 0', color: '#374151' }}>
-                          <strong>🆔 BT ID:</strong> {selectedStudent.bt_id}
-                        </p>
-                      )}
-                      {selectedStudent.grade_level && (
-                        <p style={{ margin: '8px 0', color: '#059669', fontWeight: 'bold' }}>
-                          <strong>🥋 Belt Level:</strong> {selectedStudent.grade_level} Belt
-                        </p>
-                      )}
-                      {selectedStudent.enrollment_date && (
-                        <p style={{ margin: '8px 0', color: '#6b7280' }}>
-                          <strong>📅 Joined:</strong> {new Date(selectedStudent.enrollment_date).toLocaleDateString()}
-                        </p>
-                      )}
-                      {selectedStudent.insurance_expiry && (
-                        <p style={{ 
-                          margin: '8px 0', 
-                          color: isInsuranceExpired(selectedStudent.insurance_expiry) 
-                            ? '#991b1b' 
-                            : isInsuranceExpiringSoon(selectedStudent.insurance_expiry) 
-                              ? '#92400e' 
-                              : '#065f46',
-                          fontWeight: isInsuranceExpired(selectedStudent.insurance_expiry) ? 'bold' : 'normal'
-                        }}>
-                          <strong>🛡️ Insurance Expires:</strong> {new Date(selectedStudent.insurance_expiry).toLocaleDateString()}
-                          {isInsuranceExpired(selectedStudent.insurance_expiry) && ' ⚠️ EXPIRED'}
-                          {isInsuranceExpiringSoon(selectedStudent.insurance_expiry) && ' ⚠️ EXPIRES SOON'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {(selectedStudent.contact_email || selectedStudent.contact_number) && (
-                    <div style={{
-                      background: '#f0f9ff',
-                      borderRadius: '8px',
-                      padding: '20px',
-                      border: '2px solid #0ea5e9'
-                    }}>
-                      <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#0c4a6e', fontWeight: 'bold' }}>
-                        📞 Contact Information
-                      </h3>
-                      <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                        {selectedStudent.contact_email && (
-                          <p style={{ margin: '8px 0', color: '#0c4a6e' }}>
-                            <strong>📧 Contact Email:</strong> {selectedStudent.contact_email}
-                          </p>
-                        )}
-                        {selectedStudent.contact_number && (
-                          <p style={{ margin: '8px 0', color: '#0c4a6e' }}>
-                            <strong>📱 Phone Number:</strong> {selectedStudent.contact_number}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedStudent.emergency_contact_number && (
-                    <div style={{
-                      background: '#fef2f2',
-                      borderRadius: '8px',
-                      padding: '20px',
-                      border: '2px solid #dc2626'
-                    }}>
-                      <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#991b1b', fontWeight: 'bold' }}>
-                        🚨 Emergency Contact
-                      </h3>
-                      <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                        <p style={{ margin: '8px 0', color: '#991b1b', fontWeight: 'bold' }}>
-                          <strong>Emergency Number:</strong> {selectedStudent.emergency_contact_number}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{
-                background: 'white',
-                borderRadius: '8px',
-                padding: '20px',
-                marginBottom: '20px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#1f2937' }}>
-                  📁 Document Management
-                </h3>
-
-                {(isAdmin || canEdit(selectedStudent.user_id)) && (
-                  <div style={{
-                    background: '#f8f9fa',
-                    border: '2px dashed #dc2626',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    textAlign: 'center',
-                    marginBottom: '20px'
-                  }}>
-                    <div style={{ fontSize: '48px', marginBottom: '10px' }}>📤</div>
-                    <h3 style={{ margin: '0 0 10px 0', color: '#374151' }}>Upload Document</h3>
-                    <p style={{ margin: '0 0 15px 0', color: '#6b7280', fontSize: '14px' }}>
-                      Supported formats: PDF, Images, Word, Excel (Max 10MB)
-                    </p>
-                    <input
-                      type="file"
-                      onChange={(e) => handleFileUpload(e, selectedStudent.id)}
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
-                      disabled={uploading}
-                      style={{
-                        padding: '10px',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '6px',
-                        fontSize: '14px'
-                      }}
-                    />
-                    {uploading && (
-                      <p style={{ margin: '10px 0 0 0', color: '#dc2626', fontWeight: 'bold' }}>
-                        Uploading...
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div style={{
-                background: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  background: '#374151',
-                  color: 'white',
-                  padding: '20px',
-                  textAlign: 'center'
-                }}>
-                  <h3 style={{ margin: 0, fontSize: '20px' }}>
-                    📄 Documents ({studentDocuments.length})
-                  </h3>
-                </div>
-                
-                {studentDocuments.length > 0 ? (
-                  <div style={{ padding: '20px' }}>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                      gap: '15px'
-                    }}>
-                      {studentDocuments.map((doc) => (
-                        <div key={doc.id} style={{
-                          border: '2px solid #e5e7eb',
-                          borderRadius: '8px',
-                          padding: '15px',
-                          background: '#f8f9fa'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-                            <span style={{ fontSize: '24px', marginRight: '10px' }}>
-                              {getDocumentIcon(doc.file_type)}
-                            </span>
-                            <div style={{ flex: 1 }}>
-                              <h4 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1f2937' }}>
-                                {doc.file_name}
-                              </h4>
-                              <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
-                                {formatFileSize(doc.file_size)} • {new Date(doc.uploaded_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                            <button
-                              onClick={() => downloadDocument(doc.file_path, doc.file_name)}
-                              style={{
-                                background: '#059669',
-                                color: 'white',
-                                border: 'none',
-                                padding: '6px 12px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                flex: 1
-                              }}
-                            >
-                              Download
-                            </button>
-                            {(isAdmin || canEdit(selectedStudent.user_id)) && (
-                              <button
-                                onClick={() => deleteDocument(doc.id, doc.file_path)}
-                                style={{
-                                  background: '#dc2626',
-                                  color: 'white',
-                                  border: 'none',
-                                  padding: '6px 12px',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '12px'
-                                }}
-                              >
-                                Delete
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '40px 20px',
-                    color: '#6b7280'
-                  }}>
-                    <div style={{ fontSize: '48px', marginBottom: '15px' }}>📄</div>
-                    <h3 style={{ color: '#374151' }}>No documents uploaded yet</h3>
-                    <p>Upload the first document using the upload area above.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Add Student Form */}
-          {activeTab === 'add' && isAdmin && (
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              padding: '30px',
-              marginBottom: '30px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <h2 style={{ 
-                margin: '0 0 20px 0',
-                fontSize: '24px',
-                color: '#1f2937'
-              }}>
-                Add New Club Member
-              </h2>
-              <form onSubmit={createStudent}>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                  gap: '20px',
-                  marginBottom: '20px'
-                }}>
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '5px',
-                      fontWeight: 'bold',
-                      color: '#374151'
-                    }}>
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={newStudent.first_name}
-                      onChange={(e) => setNewStudent({ ...newStudent, first_name: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '6px',
-                        fontSize: '14px'
-                      }}
-                      required
-                    />
-                  </div>
