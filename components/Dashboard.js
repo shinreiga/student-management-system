@@ -5,6 +5,9 @@ export default function Dashboard({ user }) {
   const [students, setStudents] = useState([])
   const [users, setUsers] = useState([])
   const [userProfile, setUserProfile] = useState(null)
+  const [selectedStudent, setSelectedStudent] = useState(null)
+  const [studentDocuments, setStudentDocuments] = useState([])
+  const [uploading, setUploading] = useState(false)
   const [newStudent, setNewStudent] = useState({
     first_name: '',
     last_name: '',
@@ -73,6 +76,134 @@ export default function Dashboard({ user }) {
     }
   }
 
+  const fetchStudentDocuments = async (studentId) => {
+    const { data, error } = await supabase
+      .from('student_documents')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('uploaded_at', { ascending: false })
+
+    if (!error) {
+      setStudentDocuments(data || [])
+    }
+  }
+
+  const uploadDocument = async (file, studentId, documentType = 'general') => {
+    setUploading(true)
+    
+    try {
+      // Create unique file name
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${studentId}/${Date.now()}.${fileExt}`
+      
+      // Upload file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('student-documents')
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      // Save document record to database
+      const { data, error } = await supabase
+        .from('student_documents')
+        .insert([{
+          student_id: studentId,
+          file_name: file.name,
+          file_path: uploadData.path,
+          file_size: file.size,
+          file_type: file.type,
+          document_type: documentType,
+          uploaded_by: user.id,
+          uploaded_at: new Date().toISOString()
+        }])
+
+      if (error) throw error
+
+      alert('Document uploaded successfully!')
+      fetchStudentDocuments(studentId)
+    } catch (error) {
+      alert('Error uploading document: ' + error.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const downloadDocument = async (filePath, fileName) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('student-documents')
+        .download(filePath)
+
+      if (error) throw error
+
+      // Create download link
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      alert('Error downloading document: ' + error.message)
+    }
+  }
+
+  const deleteDocument = async (documentId, filePath) => {
+    if (confirm('Are you sure you want to delete this document?')) {
+      try {
+        // Delete from storage
+        const { error: storageError } = await supabase.storage
+          .from('student-documents')
+          .remove([filePath])
+
+        if (storageError) throw storageError
+
+        // Delete from database
+        const { error: dbError } = await supabase
+          .from('student_documents')
+          .delete()
+          .eq('id', documentId)
+
+        if (dbError) throw dbError
+
+        alert('Document deleted successfully!')
+        fetchStudentDocuments(selectedStudent.id)
+      } catch (error) {
+        alert('Error deleting document: ' + error.message)
+      }
+    }
+  }
+
+  const handleFileUpload = (event, studentId) => {
+    const file = event.target.files[0]
+    if (file) {
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB')
+        return
+      }
+      uploadDocument(file, studentId)
+    }
+  }
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const getDocumentIcon = (fileType) => {
+    if (fileType.includes('pdf')) return '📄'
+    if (fileType.includes('image')) return '🖼️'
+    if (fileType.includes('word') || fileType.includes('document')) return '📝'
+    if (fileType.includes('excel') || fileType.includes('sheet')) return '📊'
+    return '📎'
+  }
+
   const createStudent = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -110,7 +241,6 @@ export default function Dashboard({ user }) {
     setUserLoading(true)
 
     try {
-      // Create user via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newUser.email,
         password: newUser.password,
@@ -119,7 +249,6 @@ export default function Dashboard({ user }) {
       if (authError) throw authError
 
       if (authData.user) {
-        // Create/update profile with role
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert([
@@ -146,7 +275,7 @@ export default function Dashboard({ user }) {
   }
 
   const deleteStudent = async (studentId) => {
-    if (confirm('Are you sure you want to delete this student?')) {
+    if (confirm('Are you sure you want to delete this student? This will also delete all their documents.')) {
       const { error } = await supabase
         .from('students')
         .delete()
@@ -154,6 +283,10 @@ export default function Dashboard({ user }) {
 
       if (!error) {
         fetchStudents()
+        if (selectedStudent?.id === studentId) {
+          setSelectedStudent(null)
+          setStudentDocuments([])
+        }
       }
     }
   }
@@ -214,6 +347,12 @@ export default function Dashboard({ user }) {
     } catch (error) {
       console.error('Unexpected error:', error)
     }
+  }
+
+  const openStudentDetails = (student) => {
+    setSelectedStudent(student)
+    fetchStudentDocuments(student.id)
+    setActiveTab('documents')
   }
 
   const isAdmin = userProfile?.role === 'admin'
@@ -308,11 +447,13 @@ export default function Dashboard({ user }) {
             padding: '8px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             display: 'flex',
-            gap: '8px'
+            gap: '8px',
+            flexWrap: 'wrap'
           }}>
             {[
               { id: 'students', label: 'Members', icon: '👥' },
               { id: 'table', label: 'Table View', icon: '📋' },
+              ...(selectedStudent ? [{ id: 'documents', label: `${selectedStudent.first_name}'s Documents`, icon: '📁' }] : []),
               ...(isAdmin ? [
                 { id: 'add', label: 'Add Member', icon: '➕' },
                 { id: 'users', label: 'User Management', icon: '👤' },
@@ -342,6 +483,174 @@ export default function Dashboard({ user }) {
             ))}
           </div>
         </div>
+
+        {/* Documents Tab */}
+        {activeTab === 'documents' && selectedStudent && (
+          <div>
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '20px',
+              marginBottom: '20px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '24px', color: '#1f2937' }}>
+                  📁 Documents for {selectedStudent.first_name} {selectedStudent.last_name}
+                </h2>
+                <button
+                  onClick={() => {
+                    setSelectedStudent(null)
+                    setStudentDocuments([])
+                    setActiveTab('students')
+                  }}
+                  style={{
+                    background: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  ← Back to Members
+                </button>
+              </div>
+
+              {/* Upload Section */}
+              {(isAdmin || canEdit(selectedStudent.user_id)) && (
+                <div style={{
+                  background: '#f8f9fa',
+                  border: '2px dashed #dc2626',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  textAlign: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '10px' }}>📤</div>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#374151' }}>Upload Document</h3>
+                  <p style={{ margin: '0 0 15px 0', color: '#6b7280', fontSize: '14px' }}>
+                    Supported formats: PDF, Images, Word, Excel (Max 10MB)
+                  </p>
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileUpload(e, selectedStudent.id)}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                    disabled={uploading}
+                    style={{
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                  />
+                  {uploading && (
+                    <p style={{ margin: '10px 0 0 0', color: '#dc2626', fontWeight: 'bold' }}>
+                      Uploading...
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Documents List */}
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                background: '#374151',
+                color: 'white',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '20px' }}>
+                  📄 Documents ({studentDocuments.length})
+                </h3>
+              </div>
+              
+              {studentDocuments.length > 0 ? (
+                <div style={{ padding: '20px' }}>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                    gap: '15px'
+                  }}>
+                    {studentDocuments.map((doc) => (
+                      <div key={doc.id} style={{
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '15px',
+                        background: '#f8f9fa'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '24px', marginRight: '10px' }}>
+                            {getDocumentIcon(doc.file_type)}
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1f2937' }}>
+                              {doc.file_name}
+                            </h4>
+                            <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
+                              {formatFileSize(doc.file_size)} • {new Date(doc.uploaded_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                          <button
+                            onClick={() => downloadDocument(doc.file_path, doc.file_name)}
+                            style={{
+                              background: '#059669',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              flex: 1
+                            }}
+                          >
+                            Download
+                          </button>
+                          {(isAdmin || canEdit(selectedStudent.user_id)) && (
+                            <button
+                              onClick={() => deleteDocument(doc.id, doc.file_path)}
+                              style={{
+                                background: '#dc2626',
+                                color: 'white',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#6b7280'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '15px' }}>📄</div>
+                  <h3 style={{ color: '#374151' }}>No documents uploaded yet</h3>
+                  <p>Upload the first document using the upload area above.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Add Student Form (Admin Only) */}
         {activeTab === 'add' && isAdmin && (
@@ -887,6 +1196,29 @@ export default function Dashboard({ user }) {
                         </p>
                       )}
                     </div>
+
+                    {/* Documents Button */}
+                    <div style={{ marginTop: '15px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
+                      <button
+                        onClick={() => openStudentDetails(student)}
+                        style={{
+                          background: '#374151',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        📁 View Documents
+                      </button>
+                    </div>
                   </div>
                 )
               })}
@@ -938,9 +1270,9 @@ export default function Dashboard({ user }) {
                       <>
                         <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Email</th>
                         <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Belt Level</th>
-                        <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Actions</th>
                       </>
                     )}
+                    <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -962,26 +1294,42 @@ export default function Dashboard({ user }) {
                           <>
                             <td style={{ padding: '15px' }}>{student.email}</td>
                             <td style={{ padding: '15px' }}>{student.grade_level || '—'}</td>
-                            <td style={{ padding: '15px' }}>
-                              {canEditThis && (
-                                <button
-                                  onClick={() => deleteStudent(student.id)}
-                                  style={{
-                                    background: '#dc2626',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '6px 12px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '12px'
-                                  }}
-                                >
-                                  Remove
-                                </button>
-                              )}
-                            </td>
                           </>
                         )}
+                        <td style={{ padding: '15px' }}>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => openStudentDetails(student)}
+                              style={{
+                                background: '#374151',
+                                color: 'white',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              📁 Documents
+                            </button>
+                            {canEditThis && (
+                              <button
+                                onClick={() => deleteStudent(student.id)}
+                                style={{
+                                  background: '#dc2626',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '6px 12px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     )
                   })}
